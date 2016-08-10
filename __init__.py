@@ -10,6 +10,7 @@ _os.chdir(_cmd_folder)
 
 try:
     from settings import global_settings
+    import add_ons
     import ampal
     from ampal import secondary_structure
     from ampal import topology
