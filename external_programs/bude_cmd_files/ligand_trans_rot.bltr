@@ -1,0 +1,77 @@
+%BUDE TRANSFORMATIONS LIBRARY
+%VERSION 2.00 
+# The above 2 lines are required, only the floating point number can vary.
+# Any line with a '#' as 1st character is a comment line and ignored, but
+# no further comments are allowed once the data entries have started 
+# (VERSION 1.00).
+# 
+# %VERSION 2.00: Will allow comments at any position within the file. Any part
+# of a line after a '#' character will considered a comment.It will also
+# ignore blank lines. 
+#
+# The file contains a set of translations and rotations from the ligand 
+# starting point. Translations are given in Angstroms. Rotations are
+# given in degrees. 
+#
+# Valid transformations are:
+# Rotations: "TILT","ROLL","PAN"
+# Translations: "XTRANS","YTRANS","ZTRANS"
+#
+# *IMPORTANT : THE ORDER IN WHICH THE TRANSFORMATIONS ARE LISTED WILL BE THE ORDER
+#  IN WHICH DOCKIT WILL CARRY OUT THE TRANSFORMATIONS.  Make sure that 
+#  rotations  are first, and translations are second.
+#
+# %VERSION 2.00: The order the Translations appear is irrelevant. However once a 
+# translation is given all following values should belong to that particular
+# translation. The values are treated as doubles if any other data appears in
+# between translation will be ignore (OR stop executing);
+#
+# A maximum of 26 alternative states for each transformation is allowed 
+# and these will be represented by the 26 letters of the alphabet in
+# the transformation descriptor for a given ligand orientation.
+# When all transformation types are set to 0.0, then the ligand position is
+# untransformed.
+#
+# %VERSION 2.00: A maximum of 26 alternative states for each transformation is
+# allowed. Any excess of data will be discarded. All transformations should have
+# the same number of alternative states.
+#
+# Note: We might later want to do a separate file allowing protein rotation, so
+# that we can Monte Carlo over a larger area, but this might be computationally
+# expensive.
+#
+# The first line of each block is 'format 6a,i3',  where the integer is
+# the number of states for that transformation.
+# The remaining lines of each block are format 'f10.5' 
+#
+# %VERSION 2.00: Any string or characters which appears before the first tag and 
+# it is not a commnent will stop the execution of the program. If any string of
+# characters apears after the first tag and it is not a double or a comment it
+# will stop the execution of the program as well.
+# The first line of each block should have a valid transformation at the start
+# of a line which could only be preceded by blank characters. The remaining
+# lines for each block should have a double value per line.
+# 
+# %VERSION 2.00: The tag END will denote the end of the library. No further 
+# lines will be considered. The line containing the END tag can only have the 
+# tag and blank characters or a comment.
+#
+# If the END tag is omitted the file will be process till the EOF and a warning 
+# will be issued.
+#
+#2345678901234567890123456789012345
+#
+TILT 1
+ 0.0
+ROLL 1
+ 0.0
+PAN  1 
+ 0.0
+XTRANS  1
+ 0.0
+YTRANS  1
+ 0.0
+ZTRANS  1
+ 0.0
+END  
+

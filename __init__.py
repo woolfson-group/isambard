@@ -19,6 +19,8 @@ try:
     import buff
     import external_programs
     import tools
+    import tools.graph_theory
+    import tools.statistics
     import tools.geometry as geometry
     import optimisation
     with open('logo.txt', 'r') as inf:
