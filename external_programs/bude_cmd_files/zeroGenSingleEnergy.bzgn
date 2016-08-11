@@ -1,0 +1,34 @@
+%BUDE TRANSFORMATION DESCRIPTOR FILE
+%VERSION  2.0
+# Random transformation descriptors produced by BUDE.
+# Format of next non-comment line is 3i10 , where :
+#  val1 is the char size of each state (hardwired presently). The width of the
+# field where each descriptor value is. ie.[123] -> 3 [   5] -> 4, the blank
+# spaces also count as one this value cannot be bigger than 6 -> [ 12345].
+#
+# %VERSION  2.0
+#
+# val1 is redundant. each state should be white space separated
+# val2 is the number of states comprising a descriptor. Range = 1-6, this number
+# of states should be the same number of states in the transformation library
+# namely
+# Rotations: "TILT","ROLL","PAN"
+# Translations: "XTRANS","YTRANS","ZTRANS"
+#
+# val3 is the number of descriptors in this file. Range = 1-4294967295
+#
+# The descriptors values are right aligned and should have at least one blank
+# space in between them. In addition each value should not be greater than the
+# number of states in transformation library for each transformation.
+# The order of the states should not be altered.
+# it MUST always be
+# TILT ROLL PAN XTRANS YTRANS ZTRANS
+#
+#
+#     val1      val2      val3
+#        v         v         v
+
+         6         6         1
+     1     1     1     1     1     1
+END
+

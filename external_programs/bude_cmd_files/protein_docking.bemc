@@ -1,0 +1,63 @@
+%BUDE EMC FILE
+%VERSION  2.00
+# Remember that the 2 previous lines are required,
+# any other lines starting with # are comments.
+# The number of generations is defined by an integer in the first
+# 20 characters of the next, non-comment, line.
+# No more comments allowed once data has started.
+#
+# %VERSION 2.00: Will allow comments at any position within the file. Any part
+# of a line after a '#' character will considered a comment.It will also
+# ignore blank lines.
+#
+# %VERSION 2.00: The tag END will denote the end of the library. No further
+# lines will be considered. The line containing the END tag can only have the
+# tag and blank characters or a comment.
+#
+# If the END tag is omitted the file will be process till the EOF and a warning
+# will be issued.
+#
+# Each column in each generation must be space separated.
+#
+# Column Seed is and integer to seed the random generator. It is used.
+#
+# Column Parents Number. It the number of descriptor that will be used to 
+# generate the Children of the current generation.
+#
+# Column Parents Energy. It the number of parent which will have their energy
+# information printed.
+#
+# Column Parents Coord. The number of Parents which will have the coordinates
+# printed to a file PDB or Mol2.
+#
+# Column Children Number: We tell BUDE how many Children to produce from
+# the Parents. If the size of the generation is greater that 50% of the total
+# it will be reduce to 50%.
+# 
+# Column Children Energy: Will tell BUDE how many descriptor info should 
+# be output for the Children.
+#
+# Column Children Coord: Will tell BUDE how many Children will have their
+# structural information written to a file.
+#
+# Column Mutation Method: Will tell BUDE how the descriptor should be generated.
+# 1 will generated the requested number of descriptors and some maybe repeated.
+# 2 will generated the requested number of descriptors and ensure that all are
+# unique. If the number requested is greater that the 10%, it will be reduced
+# to 10% of the total possible number of descriptors.
+#
+# Column Max Mut States: is the number of states that can be mutated in a descriptor.
+#
+# Column param2 & param3: are reserved, doing nothing for the moment.
+#__________________________________________________________________________________________________________________
+# int    | int     | int     | int     | int      | int      | int      | char     | int     | double   | double   |
+# use    | select  | print   | print   | create   | print    | print    | choose   | choose  | reserved | reserved |
+# Seed   | Parents | Parents | Parents | Children | Children | Children | Mutation | Max Mut | param2   | param3   |
+#        | Number  | Energy  | Coord   | Number   | Energy   | Coord    | Method   | States  |          |          | 
+#________|_________|________ |_________|__________|__________|__________|__________|_________|__________|__________|
+ 1   
+#_________________________________________________________________________________________________________________
+10142925         1        1          0          1         0           0       1          4        2.00      3.00
+
+END
+#10142925  1         -10000.0  true      1         1         0         1         80.0      2.00      3.00

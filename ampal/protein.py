@@ -2,18 +2,22 @@ import numpy
 from collections import OrderedDict
 import warnings
 
-from ampal.base_ampal import Polymer, Monomer, Atom
-from ampal.ligands import Ligand, LigandGroup
 from ampal.assembly import Assembly
+from ampal.base_ampal import Polymer, Monomer, Atom, centre_of_atoms
+from ampal.interactions import find_covalent_bonds, generate_covalent_bond_graph, \
+    generate_bond_subgraphs_from_break
+from ampal.ligands import Ligand, LigandGroup
 from ampal.pseudo_atoms import Primitive
 from ampal.analyse_protein import make_primitive_extrapolate_ends, measure_torsion_angles, residues_per_turn, \
     polymer_to_reference_axis_distances, crick_angles, alpha_angles, sequence_molecular_weight, \
     sequence_molar_extinction_280, sequence_isoelectric_point, measure_sidechain_torsion_angles
+from external_programs.bude import run_bude_internal_energy
 from external_programs.dssp import extract_all_ss_dssp, run_dssp, extract_solvent_accessibility_dssp
 from external_programs.naccess import run_naccess, extract_residue_accessibility
 from external_programs.scwrl import pack_sidechains
 from settings import global_settings
 from tools.amino_acids import get_aa_code, get_aa_letter, ideal_backbone_bond_lengths, ideal_backbone_bond_angles
+from tools.components import side_chain_centre_atoms
 from tools.geometry import Quaternion, unit_vector, dihedral, find_transformations, distance,\
     angle_between_vectors
 from tools.isambard_warnings import MalformedPDBWarning
@@ -251,6 +255,20 @@ class Polypeptide(Polymer):
         return strand_assembly
 
     @property
+    def bude_internal_energy(self):
+        """Calculates the internal energy of the Chain, and adds the values to tags."""
+        score = run_bude_internal_energy(self.pdb)
+        self.tags['internal_energy'] = score
+        return score
+
+    @property
+    def _bude_internal_experimental(self):
+        """Calculates the internal energy of the Assembly, and adds the values to tags."""
+        score = run_bude_internal_energy(self.pdb, experimental=True)
+        self.tags['internal_energy_exp'] = score
+        return score
+
+    @property
     def fasta(self):
         max_line_length = 79
         fasta_str = '>{0}:{1}|PDBID|CHAIN|SEQUENCE\n'.format(self.ampal_parent.id.upper(), self.id)
@@ -273,7 +291,7 @@ class Polypeptide(Polymer):
         ValueError
             Raised if the sequence length does not match the number of monomers in the Polymer.
         """
-        from ampal.pdb_parser import convert_pdb_to_ampal
+        from isambard.ampal.pdb_parser import convert_pdb_to_ampal
         polymer_bb = self.backbone
         if len(sequence) != len(polymer_bb):
             raise ValueError('Sequence length ({}) does not match Polymer length ({}).'.format(
@@ -958,6 +976,18 @@ class Residue(Monomer):
         else:
             hetero_flag = ' '
         return self.ampal_parent.id, (hetero_flag, self.id, self.insertion_code)
+
+    @property
+    def _visual_scc(self):
+        """ Returns coordinates of centre of 'functional' atoms of amino acid side chain."""
+        atom_labels = side_chain_centre_atoms(self.mol_code)
+        if not atom_labels:
+            return None
+        if not all([x in self.atoms for x in atom_labels]):
+            print("Not all side-chain atoms present - cannot determine side-chain centre.")
+            return None
+        atoms = [x for x in self.get_atoms() if x.res_label in atom_labels]
+        return centre_of_atoms(atoms=atoms, mass_weighted=False)
 
     @property
     def side_chain(self):

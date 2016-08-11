@@ -5,7 +5,10 @@ import warnings
 import numpy
 
 from buff import PyAtomData, BuffForceField, score_ampal
+from ampal.interactions import find_CH_pi_interactions, find_CH_pi_acceptor, find_CH_pis_in_list
 from ampal.ampal_databases import element_data
+from tools.components import atomic_mass
+from tools.components import component_category, component_covalent_bonds, component_pi_systems
 from tools.isambard_warnings import NotParameterisedWarning
 from tools.geometry import distance, Quaternion, centre_of_mass, rmsd
 from settings import global_settings
@@ -367,6 +370,14 @@ class Polymer(BaseAmpal):
         """
         return [x[x.reference_atom].array for x in self._monomers]
 
+    def get_CH_pi_interactions(self, donor_codes=None, donor_categories=None, acceptor_codes=None,
+                               dist_cutoff=3.5, angle_cutoff=55, proj_cutoff=2):
+        """ List of CH-pi interactions within an AMPAL chain, as AMPAL CH_pi objects."""
+        CH_pi_dict = find_CH_pis_in_list([x for x in self.get_monomers()], donor_codes=donor_codes,
+                                         donor_categories=donor_categories, acceptor_codes=acceptor_codes,
+                                         dist_cutoff=dist_cutoff, angle_cutoff=angle_cutoff, proj_cutoff=proj_cutoff)
+        return [item for sublist in CH_pi_dict.values() for item in sublist]
+
 
 class Monomer(BaseAmpal):
     def __init__(self, atoms=None, monomer_id=' ', ampal_parent=None):
@@ -445,6 +456,29 @@ class Monomer(BaseAmpal):
         pdb_str = write_pdb([self], ' ' if not self.ampal_parent else self.ampal_parent.id)
         return pdb_str
 
+    @property
+    def category(self):
+        comp_cat = component_category(self.mol_code)
+        return comp_cat
+
+    @property
+    def is_solvent(self):
+        if component_category(self.mol_code, ask_unknown=False) == 'solvent':
+            return True
+        else:
+            return False
+
+    def comp_covalent_bonds(self, atom_a='', atom_b=''):
+        """ Gives dictionary of covalent bonds involving atoms a and b within ideal, free version of monomer."""
+        comp_cov_bonds = component_covalent_bonds(self.mol_code, atom_a=atom_a, atom_b=atom_b)
+        return comp_cov_bonds
+
+    @property
+    def comp_pi_systems(self):
+        """ Gives dictionary of pi system labels with atom lists in ideal version of monomer."""
+        comp_pi_sys = component_pi_systems(self.mol_code)
+        return comp_pi_sys
+
     def close_monomers(self, group, cutoff=4.0):
         """Returns a list of Monomers from within a cut off distance of the Monomer
 
@@ -467,6 +501,72 @@ class Monomer(BaseAmpal):
                 if res_atom.ampal_parent not in nearby_residues:
                     nearby_residues.append(res_atom.ampal_parent)
         return nearby_residues
+
+    def environment(self, cutoff=4.0, include_self=False, include_neighbours=True, inter_chain=True,
+                    include_ligands=False, include_solvent=False):
+        """Returns the residues with any atom within a defined distance of any atom of the monomer.
+
+        Parameters
+        ----------
+        cutoff : float
+            Maximum inter-atom distance for residue to be included. Defaults to 4.
+        include_self : bool
+            If true, includes monomer in output list of residues. Default false.
+        include_neighbours : bool
+            If false, does not return monomers at i-1, i+1 positions in same chain as Monomer.
+        inter_chain : bool
+            If false, only includes nearby monomers in the same chain as the Monomer.
+        include_ligands : bool
+            If true, Monomers classed as ligands but not identified as solvent will be included in the environment.
+        include_solvent : bool
+            If true, Monomers classed as categorised as solvent will be included in the environment.
+
+        Raises
+        ------
+        AttributeError
+            Raised if Monomer has no ampal_parent defined.
+        """
+        if self.ampal_parent:
+            if self.ampal_parent.ampal_parent and inter_chain:
+                group = self.ampal_parent.ampal_parent
+            else:
+                group = self.ampal_parent
+        else:
+            raise AttributeError('Monomer is not part of a group i.e. it has no ampal_parent.')
+        if not include_ligands and not include_solvent:
+            group = Polymer(monomers=[x for x in group.get_monomers(ligands=False)])
+        elif not include_solvent:
+            group = Polymer(monomers=[x for x in group.get_monomers() if not x.is_solvent])
+        elif not include_ligands:
+            solvent_list = [x for x in group.get_monomers() if x.is_solvent]
+            group = Polymer(monomers=[x for x in group.get_monomers(ligands=False)] + solvent_list)
+        nearby_residues = self.close_monomers(group, cutoff=cutoff)
+        if include_self:
+            if self not in nearby_residues:
+                nearby_residues.append(self)
+        elif self in nearby_residues:
+            del(nearby_residues[nearby_residues.index(self)])
+        if not include_neighbours:
+            for residue in nearby_residues:
+                if residue.ampal_parent.id != self.ampal_parent.id:
+                    continue
+                if residue.id == str(int(self.id) + 1) or residue.id == str(int(self.id) - 1):
+                    del(nearby_residues[nearby_residues.index(residue)])
+        return nearby_residues
+
+    def CH_pi_interactions(self, as_donor=True, as_acceptor=True, acceptor_codes=[], donor_codes=[], dist_cutoff=3.5,
+                           angle_cutoff=55, proj_cutoff=2, inter_chain=True):
+        """ A list of CH-pi interactions that a monomer is engaged in, as AMPAL CH_pi objects."""
+        all_chpis = []
+        if as_donor:
+            all_chpis.extend(find_CH_pi_interactions(self, acceptor_codes=acceptor_codes, dist_cutoff=dist_cutoff,
+                                                     angle_cutoff=angle_cutoff, proj_cutoff=proj_cutoff,
+                                                     inter_chain=inter_chain))
+        if as_acceptor:
+            all_chpis.extend(find_CH_pi_acceptor(self, donor_codes=donor_codes, dist_cutoff=dist_cutoff,
+                                                 angle_cutoff=angle_cutoff, proj_cutoff=proj_cutoff,
+                                                 inter_chain=inter_chain))
+        return all_chpis
 
 
 class Atom(object):
@@ -524,6 +624,10 @@ class Atom(object):
     @property
     def z(self):
         return self._vector[2]
+
+    @property
+    def mass(self):
+        return atomic_mass(self.element)
 
     @property
     def unique_id(self):

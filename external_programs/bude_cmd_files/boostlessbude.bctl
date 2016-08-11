@@ -1,0 +1,447 @@
+# This is the control file. It should comply with the following format.
+# Every line that begins with '#' would be treated as comment.
+# In-line comments are allowed. After a '#' all will be considered a comment.
+#
+# Any empty line or with white spaces will be ignored.
+#
+# The option and its value must be within the same line separated by a
+# white space. All values in this file will overwrite the default values and
+# they will be overwritten by a value given by an option in the command line.
+#
+# This file may contain none, any or all options. If an option is repeated
+# the value of the last occurrence will overwrite any previous one.
+# ie.
+# option1 value1.
+# option1 value2.
+# The value of option1 will be value2.
+#
+# The END tag will denote the ending of the significant part of the file.
+# If the tag is omitted the file will be processed till the EOF
+
+# Debug flag. Values (true, false).
+# This flag will cause the program to produce Debug Information.
+# Default value 'false'
+# command line option(s): -d --debug-flag
+--debug-flag false # This is an inline comment
+
+# Print flag. Values (true, false).
+# This flag will set the program to print information to screen.
+# Default value 'false'
+# command line option(s): -p --print-flag
+-p true
+--print-flag false # This value will be used. Previous one will be overwritten.
+
+# Dummy or incomplete run. Values (true, false).
+# This option will cause the program to run and stop just
+# before the docking. The structures data will be sent to
+# local files.
+# Default value 'false'
+# command line option(s): -i --dummy-run
+--dummy-run false
+
+# This flag will set whether we want to run 
+# carbon alpha-beta only docking or not.
+# Values (true, false).
+# Default value 'false'
+# command line option(s): -b --carbon-alpha-beta-only
+--carbon-alpha-beta-only false
+
+# This flag will set whether we want to run 
+# a multi conformer docking or not.
+# Conformers are treated as single independent molecules.
+# Values (true, false).
+# Default value 'false'
+# command line option(s): -n --multi-conformer-dock
+--multi-conformer-dock false
+
+# This flag will set whether we want to run 
+# a docking that will include the hydrogen atoms or not.
+# Values (true, false).
+# Default value 'false'
+# command line option(s): -j --use-hydrogen
+--use-hydrogen false
+
+# This flag will set whether we want to run 
+# a docking that will use the centre of mass of the molecule
+# as the reference to apply the transformations.
+# Values (true, false).
+# Default value 'true'
+# command line option(s): -l --use-mass-centre
+--use-mass-centre false
+
+# rotamerReadOptions: Specify how the sequence file should be read
+# to generate the sequences.
+#I can take values from 0 - 2.
+# '0' meaning nothing should be changed.
+# '1' meaning read the file to define where to put the rotamers.
+# '2' meaning to read the file of the actual sequences.
+# default value '2'.
+# command line option(s): -r --read-rotamer-mode
+# This option does nothing so far.
+--read-rotamer-mode 2
+
+# Print Energy Mode. Values 0 - 2
+# Specify how the Energies are to be printed:
+# '0' do not print the energies.
+# '1' print internal ligand energies and don't the prot-lig energy calculations
+# '2' print internal ligand energies and the prot-lig energy calculations.
+# default value '2'.
+# command line option(s): -e --print-energy-mode
+# This option does nothing so far.
+--print-energy-mode 2
+
+# EMC route mode. Values 1 - 3
+# This option will determine how the minimisation is done.
+# 1 EMC is minimised by Energy.
+# 2 EMC is minimised by RMSD.
+# 3 Not implemented so far it will default to Energy.
+# default value '1'.
+# command line option(s): -o --emc-route
+--emc-route 1
+
+# RMS type. Values 0 - 1
+# This option will determine how the RMSD will be calculated.
+# 0 RMSD will consider Carbon Alpha only.
+# 1 RMSD will consider All atoms.
+# default value '1'.
+# command line option(s): -y --rmsd-type
+--rmsd-type 0
+
+# Sorting Mode. Values 0 - 2
+# define how to sort the parents.
+# '0' do not sort parents.
+# '1' use skim sort, suited for small parent size.
+# '2' use comb sort, suited for large parent size.
+# default value '2'.
+# command line option(s): -s --sort-mode
+# This option does nothing so far.
+--sort-mode 2
+
+# Activate Residues Mode. Values 00 - 22
+# This is a two digits base 3 value. The first digit is for the
+# receptor and the second for the ligand.
+# 0 - means do not activate.
+# 1 - means activate by sequence file.
+# 2 - means activate by surface file.
+# ie 12 - means activate receptor by sequence  and the ligand by surface.
+# Default value '00'.
+# command line option(s): -a --residue-activation-mode
+--residue-activation-mode 00
+
+# define how the Energies will be calculated.
+# It should take values 0 - 2.
+# 0: will calculate the energies the as the cumulative of the components in the host.
+# 1: will calculate the energies the as the cumulative of the components using acceleration.
+# 2: will calculate the energies components independently in the host
+#    and print this to a file for each residue interaction.
+# default value '0'.
+# command line option(s): -c --energy-calculation-route
+--energy-calculation-route 0
+
+# Generation Seed. Must be an positive integer greater than 0
+# Seed to use for generation 0.
+# default value '10142925'.
+# command line option(s): -g --generation-zero-seed
+--generation-zero-seed 10142925
+
+# Cut off distance. Must be a double greater than 0
+# This is the cut off distance in between residues.
+# default value '22.0'.
+# command line option(s): -u --cutoff-distance
+--cutoff-distance 20.0
+
+# Fractional Multiplier
+# fractional multiplier for Energy in an RMS/FFF
+# EMC minimisation
+# This option does nothing so far.
+# default value '1.000'.
+# command line option(s): -m --fractional-multiplier
+--fractional-multiplier 1.000
+
+# ----------------8<-------------------8<---------------------
+# GENERATION ZERO.
+# Only one of the three options below MUST be specified
+# and at least one MUST be specified.
+
+# This flag will set whether we want to use an
+# exhaustive number of descriptors or not.
+# Values (true, false).
+# If --exhaustive-generation is set to true then
+# --generation-zero-descriptor-number must be 0 or empty and
+# --zero-generation-filename must be empty
+# Default value 'false'
+# command line option(s): -x --exhaustive-generation
+--exhaustive-generation false
+
+# Zero Descriptor Number
+# This is the number of descriptors that would be
+# randomly generated
+# If --generation-zero-descriptor-number has value greater than 0 then
+# --exhaustive-generation MUST  be set to false and
+# --zero-generation-filename MUST be empty.
+# default value '0'.
+# command line option(s): -z --generation-zero-descriptor-number
+--generation-zero-descriptor-number 0
+
+# Zero generation file name.
+# must exist if to be used
+# If --zero-generation-filename is given then
+# --generation-zero-descriptor-number MUST be 0 or empty
+# --exhaustive-generation MUST  be set to false
+# %BUDE TRANSFORMATION DESCRIPTOR FILE
+# default value ''.
+# file extension: .bzgn
+# command line option(s): -Z --zero-generation-filename
+--zero-generation-filename inputs/zeroGenSingleEnergy.bzgn 
+
+# This flag will set whether we want unique TDs
+# for Generation Zero or not.
+# Values (true, false).
+# Default value 'false'
+# command line option(s): --unique-tds-gen0 
+--unique-tds-gen0 false
+
+# ----------------8<-------------------8<---------------------
+# FILES OPTIONS.
+# The three options below will affect the naming
+# of the files being output by BUDE
+
+# Output file's Base. (file.ext -> file)
+# This option is used to generated the output files.
+# default value 'compound'.
+# command line option(s): -R --output-file-base
+--output-file-base /panfs/panasas01/bioc/cw12401/results/test_bude
+
+# Ligand Energy file name.
+# must be created if given
+# default value ''.
+# file extension: .btle
+# command line option(s): -E --output-energy-filename
+--output-energy-filename /panfs/panasas01/bioc/cw12401/results/energy_test 
+
+# Molecule coordinates format: PDB, Mol2.
+# This is the format that molecules will be written to a file.
+# default value 'PDB'.
+# command line option(s): --output-coordinates-format
+--output-coordinates-format PDB
+
+# ----------------8<-------------------8<---------------------
+# RECEPTOR FILES.
+# File Options for the receptor and Docking Grid Centres,
+# only the coordinates file is mandatory.
+
+# Receptor coordinates file name.
+# Must exist.
+# PDB, Mol2 format.
+# Or a file with a list of file names. One file name per line
+# @<TRIPOS>MOLECULE
+# %BUDE MOLECULE LIST
+# file extension: .blst
+# All files in the list must be in PDB or Mol2 format
+# default value 'receptor.pdb'.
+# command line option(s): -P --receptor-coordinates-filename
+--receptor-coordinates-filename inputs/ccb_out_hex_rec.pdb
+
+# Docking Grid Centres.
+# These are the centre of the Docking grid(s), one per receptor.
+# If none is given it is understood
+# that the receptor has already being centred.
+# This means that the centre of the coordinates system
+# (x = 0, y = 0, z = 0) coincides the centre of the docking grid(s).
+# The Docking Grid must always be placed
+# in the searching space on the receptor.
+# This option will only be used for dockings
+# where the receptor does not have a surface file.
+# ie: X,Y,Z:Xn,Yn,Zn
+# Please note that values X Y Z are comma separated
+# and points are colon separated.
+# There MUST NOT be space in between them.
+# default value ''.
+# command line option(s): --docking-grid-centres 
+--docking-grid-centres 
+
+# Receptor Connolly Surface file name.
+# must exist if to be used
+# %BUDE CONNOLLY SURFACE FILE
+# %BUDE CONNOLLY SURFACE LIST
+# default value ''.
+# file extension: .bsrf
+# command line option(s): -O --receptor-surface-filename
+--receptor-surface-filename 
+
+# Receptor sequence file name.
+# Must exist if to be used.
+# %BUDE SEQUENCE FILE
+# %BUDE SEQUENCE LIST
+# default value ''.
+# file extension: .bseq
+# command line option(s): -S --receptor-sequence-filename
+--receptor-sequence-filename 
+
+# ----------------8<-------------------8<---------------------
+# LIGAND FILES.
+# File Options for the Ligand, only the coordinates file is mandatory.
+
+# Ligand coordinates file name.
+# Must exist.
+# PDB, Mol2 format.
+# Or a file with a list of file names. One file name per line
+# @<TRIPOS>MOLECULE
+# %BUDE MOLECULE LIST
+# file extension: .blst
+# All files in the list must be in PDB or Mol2 format
+# default value 'ligand.pdb'.
+# command line option(s): -I --ligand-coordinates-filename
+--ligand-coordinates-filename inputs/ccb_out_hex_lig.pdb
+
+# Ligand sequence file name.
+# Must exist if to be used.
+# %BUDE SEQUENCE FILE
+# %BUDE SEQUENCE LIST
+# default value ''.
+# file extension: .bseq
+# command line option(s): -Q --ligand-sequence-filename
+--ligand-sequence-filename 
+
+# Ligand Connolly Surface file name.
+# must exist if to be used
+# %BUDE CONNOLLY SURFACE FILE
+# %BUDE CONNOLLY SURFACE LIST
+# default value ''.
+# file extension: .bsrf
+# command line option(s): -N --ligand-surface-filename
+--ligand-surface-filename 
+
+# Target coordinates file name.
+# must exist if to be used
+# PDB, Mol2 format file.
+# Or a file with a list of file names. One file name per line
+# @<TRIPOS>MOLECULE
+# %BUDE MOLECULE LIST
+# file extension: .blst
+# All files in the list must be in PDB or Mol2 format
+# This option is for finding the Ligand RMSD (testing purposes)
+# if you already know the docking position of the ligand.
+# default value ''.
+# command line option(s): -G --target-coordinates-filename
+--target-coordinates-filename 
+
+# ----------------8<-------------------8<---------------------
+# MANDATORY BUDE LIBRARIES.
+# Mandatory BUDE libraries for all docking cases.
+
+# Ligand's Translations - Rotations file name
+# Must exist.
+# %BUDE TRANSFORMATIONS LIBRARY
+# default value 'ligand_trans_rot.bltr'.
+# command line option(s): -T --transformations-filename
+--transformations-filename inputs/ligand_trans_rot.bltr
+
+# Forcefield file name.
+# Must exist.
+# %BUDE HEAVY ATOM AMINO-ACID FORCEFIELD LIBRARY
+# default value 'force_field.bhff'.
+# command line option(s): -F --forcefield-filename
+--forcefield-filename inputs/force_field.bhff
+
+# EMC evolution file name.
+# Must exist.
+# %BUDE EMC FILE
+# default value 'compound.bemc'.
+# command line option(s): -V --emc-filename
+--emc-filename inputs/protein_docking.bemc
+
+# ----------------8<-------------------8<---------------------
+# OPTIONAL BUDE LIBRARIES.
+# Optional BUDE libraries, but some of them
+# might become mandatory depending on the docking case.
+
+# Rotamer library file name.
+# must exist if to be used
+# %BUDE ROTAMER LIBRARY
+# default value ''.
+# file extension: .brot
+# command line option(s): -L --rotamer-library-filename
+--rotamer-library-filename 
+
+# Rotamer choice file name.
+# must exist if to be used
+# %BUDE ROTAMER CHOICE
+# default value ''.
+# file extension: .brch
+# command line option(s): -C --rotamer-choice-filename
+--rotamer-choice-filename 
+
+# Mol2 translation library file name.
+# This will have the translations from PDB atom name to Mol2 atom type.
+# must exist if to be used
+# %BUDE MOL2 ATOM TYPE TRANSLATION LIBRARY
+# default value ''.
+# file extension: .bm2t
+# command line option(s): --mol2-translations-filename
+--mol2-translations-filename 
+
+# ----------------8<-------------------8<---------------------
+# OpenCL options.
+# All of these options are optional, only need them if acceleration is used.
+
+# OpenCL BUDE kernel file. Values file.cl
+# This the option to tell BUDE where to find the kernel file.
+# If specified it MUST exist even if NOT acceleration is used.
+# Default value ''
+# command line option: --cl-kernel-file
+--cl-kernel-file 
+
+# OpenCL Device(s) type to be used.
+# Values ('all', 'gpu', 'cpu', 'default', 'accelerator')
+# ie. --cl-dev DEVICE
+# This will select all devices type "DEVICE" in the system.
+# Default value 'all'
+# command line option: --cl-dev
+--cl-dev all
+
+# OpenCL Dynamic workload. Values true/false
+# This option will toggle on or off the dynamic workload
+# Default value 'true'
+# command line option: --cl-dlb
+--cl-dlb true
+
+# Device redistribution workload. Values 0 - 100
+# This an OpenCL option .
+# Default value '5'
+# command line option: --cl-dbl-wload
+--cl-dbl-wload 5
+
+# OpenCL Platform:Devices pair to select. Values P:D[,P:D]
+# This is a list of P:D ie:
+# 1:1,1:2,2:1
+# To see available platforms and devices,
+# use option: '--cl-info'
+# P & D are the indexes listed in this information.
+# If using GPU as the device and the system has more than one.
+# It is convenient to used other than the first one,
+# which is usually the one driving the screen graphics.
+# Default value ''
+# command line option: --cl-select
+--cl-select 
+
+# OpenCL initial workload per device. Unsigned[,Unsigned]
+# This a comma separated list. ie
+# 45,55:
+# Default value ''
+# This list is the workload % for each device.
+# Range between 0 - 100, the total should sum 100.
+# command line option: --cl-loads
+--cl-loads 
+
+# OpenCL workgroup size. Values long[,long]
+# This a comma separated list. ie
+# 100,100:
+# Default value ''
+# command line option: --cl-wgsize
+--cl-wgsize 
+
+
+END # Any information after this tag will be ignored.
+
+This information will be ignored
