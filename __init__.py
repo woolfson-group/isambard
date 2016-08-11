@@ -13,7 +13,7 @@ try:
     import add_ons
     import ampal
     from ampal import secondary_structure
-    from ampal import topology
+    from ampal import specifications
     from ampal import analyse_protein
     from ampal import interactions
     import buff
