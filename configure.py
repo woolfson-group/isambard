@@ -97,6 +97,15 @@ def base_install():
 
 def optional_install():
     """Generates configuration settings for optional functionality of ISAMBARD."""
+    # bude
+    print('{BOLD}Setting up BUDE (optional legacy, replaced with BUFF){END_C}'.format(**text_colours))
+    bude = {}
+    bude_cmd_files = isambard_path / 'external_programs' / 'bude_cmd_files'
+    bude['cmd_files'] = str(bude_cmd_files)
+    bude_internal_path = get_user_path('Please provide a path to your BUDE internal executable.', required=False)
+    bude['internal_energy_binary'] = str(bude_internal_path)
+    settings['bude'] = bude
+
     # reduce
     print('{BOLD}Setting up Reduce (used to find non-covalent interactions){END_C}'.format(**text_colours))
     reduce = {}
@@ -104,6 +113,13 @@ def optional_install():
     reduce['path'] = str(reduce_path)
     reduce['folder'] = str(reduce_path.parent) if reduce_path else ''
     settings['reduce'] = reduce
+
+    # interactions database
+    print('{BOLD}Setting up interaction database (optional){END_C}'.format(**text_colours))
+    interactions_database = {}
+    id_path = get_user_path('Please provide a path to the folder that hold the databases.', required=False)
+    interactions_database['folder'] = str(id_path)
+    settings['interactions_database'] = interactions_database
 
     # naccess
     print('{BOLD}Setting up naccess (optional){END_C}'.format(**text_colours))
@@ -118,17 +134,30 @@ def optional_install():
     profit_path = get_user_path('Please provide a path to your ProFit executable.', required=False)
     profit['path'] = str(profit_path)
     settings['profit'] = profit
+
+    # structural database
+    print('{BOLD}Setting up structural database (optional){END_C}'.format(**text_colours))
+    sd = {}
+    sd_path = get_user_path('Please provide a path to where you structural database is stored.', required=False)
+    sd['path'] = str(sd_path)
+    settings['structural_database'] = sd
     return
 
 
 def install_for_circleci(settings_path):
     cci_settings = {
+        "bude": {"cmd_files": "",
+                 "internal_energy_binary": ""},
         "buff": {"default_force_field": "standard"},
         "dssp": {"path": "/home/ubuntu/isambard/dssp-2.0.4-linux-amd64"},
+        "interactions_database": {"folder": ""},
+        "naccess": {"path": ""},
+        "profit": {"path": ""},
         "reduce": {"folder": "/home/ubuntu/isambard",
                    "path": "/home/ubuntu/isambard/reduce.3.23.130521.linuxi386"},
         "scwrl": {"path": "/home/ubuntu/isambard/Scwrl4",
-                  "rigid_rotamer_model": True}
+                  "rigid_rotamer_model": True},
+        "structural_database": {"path": ""}
         }
     with open(str(settings_path), 'w') as outf:
         outf.write(json.dumps(cci_settings, sort_keys=True, indent=4, separators=(',', ':')))
