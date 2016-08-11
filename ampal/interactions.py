@@ -2,10 +2,17 @@ import itertools
 import networkx
 
 from ampal.ampal_databases import element_data
-from tools.geometry import distance, gen_sectors
+from tools.components import ch_bond_dict, component_pi_systems, get_hbond_dicts, get_hbond_acceptors,\
+    get_hbond_donors, known_pi_systems
+from tools.geometry import distance, angle_between_vectors, find_foot_on_plane, centre_of_mass, gen_sectors,\
+    dihedral
 
 core_components = ['ALA', 'ARG', 'ASN', 'ASP', 'CYS', 'GLN', 'GLU', 'GLY', 'HIS', 'ILE', 'LEU', 'LYS', 'MET', 'PHE',
                    'PRO', 'SER', 'THR', 'TRP', 'TYR', 'VAL', 'HOH']
+
+hbond_donors, hbond_acceptors = get_hbond_dicts(mol_codes=core_components)
+ch_bonds = ch_bond_dict(mol_codes=core_components)
+all_pi_systems = known_pi_systems()
 
 
 class Interaction(object):
@@ -96,6 +103,236 @@ class HydrogenBond(NonCovalentInteraction):
             dm.id, dc.id, dm.mol_code, self.donor.res_label, self.acceptor.res_label, am.mol_code, am.id, ac.id)
 
 
+class PiBase(object):
+    """ A container for all types of interaction, with donor and acceptor as AMPAL Monomers."""
+
+    def __init__(self, donor, acceptor):
+        self.donor = donor
+        self.acceptor = acceptor
+
+    def __repr__(self):
+        return '<Interaction between {} {}{} (donor) and {} {}{} (acceptor)>'.format(self.donor.mol_code, self.donor.id,
+            self.donor.ampal_parent.id,  self.acceptor.mol_code, self.acceptor.id, self.acceptor.ampal_parent.id)
+
+    @property
+    def donor_monomer(self):
+        return self.donor
+
+    @property
+    def acceptor_monomer(self):
+        return self.acceptor
+
+
+class NPiStarInteraction(PiBase):
+    """Defines an n-->pi* interaction in terms of a donor and acceptor. Currently only works on
+    backbone n-pi* interactions."""
+
+    def __init__(self, donor, acceptor):
+        super(NPiStarInteraction,self).__init__(donor,acceptor)
+
+    def __repr__(self):
+        dm = self.donor
+        am = self.acceptor
+
+        return '<n-->pi* interaction between ({}-{}) {} ||||| {} ({}{})>'.format(
+                dm.id,dm.mol_code,dm['O'].res_label,am['C'].res_label,am.mol_code,am.id)
+
+    @property
+    def distance(self):
+        """ Distance between donor O atom and acceptor C atom"""
+        if self.donor['O'] and self.acceptor['C']:
+            return distance(self.donor['O'], self.acceptor['C'])
+        else:
+            return None
+
+    @property
+    def angle(self):
+        """Angle between the O-C n->pi* bond and the acceptor C=O bond"""
+
+        if self.donor['O'] and self.acceptor['C'] and self.acceptor['O']:
+            oc_vector = self.donor['O'].array - self.acceptor['C'].array
+            acc_CO_vector = self.acceptor['O'].array - self.acceptor['C'].array
+            return angle_between_vectors(oc_vector,acc_CO_vector)
+        else:
+            return None
+    @property
+    def carbonyl_dihedral(self):
+
+        if self.donor['CA'] and self.donor['C'] and self.donor['O'] and self.acceptor['C']:
+
+            return dihedral(self.donor['CA'],self.donor['C'],self.donor['O'],self.acceptor['C'])
+        else:
+            return None
+
+    def parameters(self, dist_cutoff=3.22, angle_min=95, angle_max=125, dihedral_min=120):
+        """ Returns all N-pi* measurements, and whether these consistute a N-pi* interaction with defined parameters.
+
+        Parameters
+        ----------
+        dist_cutoff : float
+            Maximum distance between donor oxygen and acceptor carbonyl
+        angle_min : float
+            Minimum angle between O-C n-pi* interaction and acceptor C=O bond.
+        angle_max : float
+            Maximum angle between O-C n-pi* interaction and acceptor C=O bond.
+        dihedral_min : float
+            Minimum dihedral angle for CA-C-O-C (position of pi cloud).
+
+        Returns
+        -------
+        answer : bool
+            Whether it constitutes a CH-pi intetaction.
+        measurements : dict
+            Calculated measurements.
+        """
+        if self.distance is None or self.distance > dist_cutoff:
+            return False, {'distance': self.distance,
+                           'angle': 'Not calculated',
+                           'dihedral': 'Not calculated'}
+        if self.angle is None or self.angle < angle_min or self.angle > angle_max:
+            return False, {'distance': self.distance,
+                           'angle': self.angle,
+                           'dihedral': 'Not calculated'}
+        if self.carbonyl_dihedral is None or abs(self.carbonyl_dihedral) < dihedral_min:
+            return False, {'distance': self.distance,
+                           'angle': self.angle,
+                           'dihedral': self.carbonyl_dihedral}
+        return True, {'distance': self.distance,
+                      'angle': self.angle,
+                      'dihedral': self.carbonyl_dihedral}
+
+
+class CH_pi(PiBase):
+    """ Defines a CH-pi interaction in terms of donor C and H atoms and acceptor pi-system.
+
+    Parameters
+    ----------
+    donor : AMPAL Monomer
+    donor_atoms : dict
+        Dictionary containing donor C and H atoms, as strings corresponding to PDB atom labels.
+    acceptor : AMPAL Monomer
+    pi_system : str
+        Code for pi system corresponding to pi_systems table in components database.
+        Required if acceptor has multiple pi systems (e.g., Trp).
+    """
+
+    def __init__(self, donor, donor_atoms, acceptor, pi_system=None):
+        super(CH_pi, self).__init__(donor, acceptor)
+        self.c = donor_atoms['C']
+        self.h = donor_atoms['H']
+        if pi_system:
+            self.pi_system = pi_system
+        elif self.acceptor_monomer.mol_code not in all_pi_systems:
+            raise AttributeError("{0} has no defined pi systems - it cannot act as an acceptor.". \
+                                 format(self.acceptor_monomer.mol_code))
+        elif len(all_pi_systems[self.acceptor_monomer.mol_code]) > 1:
+            raise NameError("{0} has multiple pi systems - pi_system argument must be defined from {1}.".\
+                        format(self.acceptor_monomer.mol_code, all_pi_systems[self.acceptor_monomer.mol_code].keys()))
+        else:
+            self.pi_system = list(all_pi_systems[self.acceptor_monomer.mol_code].keys())[0]
+
+
+    def __repr__(self):
+        return '<CH-pi interaction ({0}{1}) {2}-{3} ||||| {4} ({5}{6})>'.format(self.donor.mol_code, self.donor.id,
+                self.c, self.h, self.pi_system, self.acceptor.mol_code, self.acceptor.id)
+
+    @property
+    def c_atom(self):
+        """ Donor C atom as AMPAL Atom"""
+        return self.donor[self.c]
+
+    @property
+    def h_atom(self):
+        """ Donor H atom as AMPAL Atom"""
+        return self.donor[self.h]
+
+    @property
+    def pi_atoms(self):
+        """ List of AMPAL Atoms making up acceptor pi system"""
+        pi_system_atoms = all_pi_systems[self.acceptor_monomer.mol_code][self.pi_system]
+        return [self.acceptor_monomer[x] for x in pi_system_atoms if x in self.acceptor_monomer.atoms]
+
+    @property
+    def h_proj(self):
+        """ Coordinates of projection of H atom onto plane of pi system."""
+        if len(self.pi_atoms) > 2:
+            pi1 = self.pi_atoms[0]
+            pi2 = self.pi_atoms[1]
+            pi3 = self.pi_atoms[2]
+            return find_foot_on_plane(pi1._vector, pi2._vector, pi3._vector, self.h_atom._vector)
+        else:
+            print("H projection cannot be defined for {0} - fewer than three atoms in the pi-system".format(self))
+            return None
+
+    @property
+    def pi_centre(self):
+        """ Coordinates as array of centre of pi system"""
+        return centre_of_mass([x._vector for x in self.pi_atoms])
+
+    @property
+    def distance(self):
+        """ Distance between H atom and centre of pi system"""
+        if self.pi_atoms:
+            return distance(self.pi_centre, self.h_atom._vector)
+        else:
+            return None
+
+    @property
+    def proj_dist(self):
+        """ Distance between projection of H atom onto plane of pi system and centre of pi system"""
+        if not self.h_proj is None:
+            return distance(self.h_proj, self.pi_centre)
+        else:
+            print("Projection distance cannot be measured for {0} - no H projection defined.".format(self))
+            return None
+
+    @property
+    def angle(self):
+        """ Angle between C-H bond and normal to plane of pi system"""
+        if not self.h_proj is None:
+            pi_H_vector = self.h_proj - self.h_atom._vector
+            CH_vector = self.h_atom._vector - self.c_atom._vector
+            return angle_between_vectors(pi_H_vector, CH_vector)
+        else:
+            print("Angle cannot be measured for {0} - no H projection defined.".format(self))
+            return None
+
+    def parameters(self, dist_cutoff=3.5, angle_cutoff=55, proj_cutoff=2):
+        """ Returns all CH-pi measurements, and whether these consistute a CH-pi interaction with defined parameters.
+
+        Parameters
+        ----------
+        dist_cutoff : float
+            Maximum distance between proton and centre of pi system.
+        angle_cutoff : float
+            Maximum angle between C-H bond and normal to plane of pi system.
+        proj_cutoff : float
+            Maximum distance between projection of H onto plane of pi system and centre of pi system.
+
+        Returns
+        -------
+        answer : bool
+            Whether it constitutes a CH-pi intetaction.
+        measurements : dict
+            Calculated measurements.
+        """
+        if self.distance is None or self.distance > dist_cutoff:
+            return False, {'distance': self.distance,
+                           'angle': 'Not calculated',
+                           'proj_distance': 'Not calculated'}
+        if self.angle is None or self.angle > angle_cutoff:
+            return False, {'distance': self.distance,
+                           'angle': self.angle,
+                           'proj_distance': 'Not calculated'}
+        if self.proj_dist is None or self.proj_dist > proj_cutoff:
+            return False, {'distance': self.distance,
+                           'angle': self.angle,
+                           'proj_distance': self.proj_dist}
+        return True, {'distance': self.distance,
+                      'angle': self.angle,
+                      'proj_distance': self.proj_dist}
+
+
 def covalent_bonds(atoms, threshold=1.1):
     bonds = []
     for a, b in atoms:
@@ -172,6 +409,342 @@ def generate_bond_subgraphs_from_break(bond_graph, atom1, atom2):
         # Add edge
         bond_graph.add_edge(atom1, atom2)
     return subgraphs
+
+
+def hydrogen_bonds(atoms, dist_range=(1.5, 2.7), angular_cutoff=90.0, water_donors=True):
+    """Returns a list of hydrogen bonds found in the input structure.
+
+    Parameters
+    ----------
+    atoms: [Atom]
+        Atoms to be analysed.
+    dist_range: (float, float)
+        Minimum and maximum distance for interaction.
+    angular_cutoff: float
+        Minimum interaction angle.
+    water_donors : bool
+        True to include waters as donors if water protons are missing, e.g. for crystal structures but not models.
+
+    Returns
+    -------
+    hbonds: [HydrogenBonds]
+        A list of the hydrogen bonds found in the ampal object.
+    """
+    donors = []
+    acceptors = []
+    donor_waters = []
+    for atom in atoms:
+        component = atom.ampal_parent.mol_code
+        if component not in hbond_donors:
+            hbond_donors[component] = get_hbond_donors(component)
+            hbond_acceptors[component] = get_hbond_acceptors(component)
+        if atom.res_label in hbond_donors[component]:
+            donors.append(atom)
+        elif atom.res_label in hbond_acceptors[component]:
+            acceptors.append(atom)
+        if component == 'HOH' and atom.res_label == 'O':
+            donor_waters.append(atom)
+    potential_hbonds = []
+    for d in donors:
+        for a in acceptors:
+            dist = distance(d._vector, a._vector)
+            if dist_range[0] < dist < dist_range[1]:
+                potential_hbonds.append(((d, a), dist))
+    if water_donors:
+        for d in donor_waters:
+            for a in acceptors:
+                if a.ampal_parent.mol_code == 'HOH':
+                    continue
+                dist = distance(d._vector, a._vector)
+                if dist_range[0] + 0.96 < dist < dist_range[1] + 0.96:
+                    potential_hbonds.append(((d, a), dist - 0.96))
+    hbonds = []
+    for ((da, aa), dist) in potential_hbonds:
+        da_mc = da.ampal_parent.mol_code
+        aa_mc = aa.ampal_parent.mol_code
+        bv = aa._vector - da._vector  # hbond vector
+        #  Donor and hydrogen
+        if da.ampal_parent.mol_code == 'HOH' and da.res_label == 'O':
+            dba = None
+        else:
+            dv = da.ampal_parent.atoms[hbond_donors[da_mc][da.res_label]]._vector - da._vector
+            dba = angle_between_vectors(dv, bv)
+            if dba < angular_cutoff:
+                continue
+        # Acceptor and acceptor-antecedent
+        baa = None
+        fail = False
+        for aaa in hbond_acceptors[aa_mc][aa.res_label]:
+            if aaa not in aa.ampal_parent.atoms:
+                continue
+            av = aa.ampal_parent.atoms[aaa]._vector - aa._vector
+            baa = angle_between_vectors(-bv, av)
+            if baa < angular_cutoff:
+                fail = True
+        if not fail:
+            hbond = HydrogenBond(da, aa, dist, dba, baa)
+            hbonds.append(hbond)
+    return hbonds
+
+
+# This should be expanded to a dictionary with values for each hbond pair
+# check figure 1 in Gail's latest ProSci paper
+def find_hydrogen_bonds(ampal, dist_range=(1.5, 2.7), angular_cutoff=90.0, water_donors=True):
+    """Returns a list of hydrogen bonds found in the input structure involving the 20 proteinogenic amino acids.
+
+    Parameters
+    ----------
+    ampal: BaseAmpal or subclass
+        AMPAL object to be analysed.
+    dist_range: (float, float)
+        Minimum and maximum distance for interaction.
+    angular_cutoff: float
+        Minimum interaction angle.
+
+    Returns
+    -------
+    hbonds: [HydrogenBonds]
+        A list of the hydrogen bonds found in the ampal object.
+    """
+    sectors = gen_sectors(ampal.get_atoms(), dist_range[1] * 1.1)
+    hbonds = []
+    for sector in sectors.values():
+        hbonds.extend(hydrogen_bonds(sector, dist_range, angular_cutoff, water_donors=water_donors))
+    return list(set(hbonds))
+
+
+def find_CH_pi_interactions(monomer, acceptor_codes=None, dist_cutoff=3.5, angle_cutoff=55, proj_cutoff=2,
+                            inter_chain=True):
+    """ Finds all CH-pi interactions where an AMPAL monomer is the CH donor based on defined parameters.
+
+    Notes
+    -----
+    Currently only finds interactions with acceptors that are part of Chains (i.e., not ligands) due to constraint
+    of environment method.
+
+    Parameters
+    ----------
+    monomer : AMPAL Monomer
+        The monomer for which CH-pi interactions will be found.
+    acceptor_codes : list or None
+        Optional list of mol_codes of Residues that will be considered as acceptors, else all considered.
+    dist_cutoff : float
+        Maximum accepted distance between proton and centre of pi system to constitute an interaction.
+    angle_cutoff : float
+        Maximum accepted angle between CH bond and normal pi system to constitute an interaction.
+    proj_cutoff : float
+        Maximum accepted distance between projection of CH proton and centre of pi system to constitute an interaction.
+    inter_chain : bool
+        If false, only includes CH-pi interactions where the acceptor is in the same chain as the monomer donor.
+
+    Returns
+    -------
+    interactions : list
+        All of the interactions (as CH_pi class objects) that meet the parameters for the monomer.
+    """
+    interactions = []
+    if monomer.mol_code in ch_bonds:
+        comp_ch_bonds = ch_bonds[monomer.mol_code]
+    else:
+        comp_ch_bonds = monomer.comp_covalent_bonds('C', 'H')
+        ch_bonds[monomer.mol_code] = comp_ch_bonds
+    if not comp_ch_bonds:
+        return interactions
+    hc_bonds = {}
+    for comp_c in comp_ch_bonds:
+        try:
+            c_atom = monomer.atoms[comp_c]
+        except KeyError:
+            continue
+        for comp_h in comp_ch_bonds[comp_c]:
+            try:
+                h_atom = monomer.atoms[comp_h]
+                hc_bonds[h_atom.res_label] = c_atom.res_label
+            except KeyError:
+                continue
+    if not hc_bonds:
+        return interactions
+    if acceptor_codes:
+        pi_systems = {}
+        for acceptor in acceptor_codes:
+            if acceptor in all_pi_systems:
+                pi_systems[acceptor] = all_pi_systems[acceptor]
+    else:
+        pi_systems = all_pi_systems
+    for residue in monomer.environment(include_self=False, inter_chain=inter_chain):
+        if residue.mol_code not in pi_systems:
+            continue
+        pi_codes = pi_systems[residue.mol_code]
+        for system in pi_codes:
+            if len(pi_codes[system]) > 5:
+                new_proj_cutoff = proj_cutoff
+            else:
+                new_proj_cutoff = proj_cutoff - 0.4
+            for bound_h in hc_bonds:
+                possible_interaction = CH_pi(donor=monomer, donor_atoms={'C': hc_bonds[bound_h], 'H': bound_h},
+                                             acceptor=residue, pi_system=system)
+                within_parameters, parameters = possible_interaction.parameters(dist_cutoff=dist_cutoff,
+                                                    angle_cutoff=angle_cutoff,  proj_cutoff=new_proj_cutoff)
+                if within_parameters:
+                    interactions.append(possible_interaction)
+    return interactions
+
+
+def find_CH_pi_acceptor(monomer, donor_codes=None, dist_cutoff=3.5, angle_cutoff=55, proj_cutoff=2, inter_chain=True,
+                        include_ligands=True):
+    """ Finds all CH-pi interactions where an AMPAL monomer is the CH acceptor based on defined parameters.
+
+        Notes
+        -----
+        Currently only finds interactions with donors that are part of Chains (i.e., not ligands) due to constraint
+        of environment method.
+
+        Parameters
+        ----------
+        monomer : AMPAL Monomer
+            The monomer for which CH-pi interactions will be found.
+        donor_codes : list or None
+            Optional list of mol_codes of Residues that will be considered as donors, else all considered.
+        dist_cutoff : float
+            Maximum accepted distance between proton and centre of pi system to constitute an interaction.
+        angle_cutoff : float
+            Maximum accepted angle between CH bond and normal pi system to constitute an interaction.
+        proj_cutoff : float
+            Maximum accepted distance between projection of CH proton and centre of pi system to constitute
+            an interaction.
+        inter_chain : bool
+            If false, only includes CH-pi interactions where the donor is in the same chain as the monomer acceptor.
+
+        Returns
+        -------
+        interactions : list
+            All of the interactions (as CH_pi class objects) that meet the parameters for the monomer.
+        """
+    interactions = []
+    if monomer.mol_code not in all_pi_systems:
+        return interactions
+    else:
+        pi_codes = all_pi_systems[monomer.mol_code]
+    for residue in monomer.environment(inter_chain=inter_chain, include_self=False, include_ligands=include_ligands):
+        if donor_codes and residue.mol_code not in donor_codes:
+            continue
+        if residue.mol_code in ch_bonds:
+            comp_ch_bonds = ch_bonds[residue.mol_code]
+        else:
+            comp_ch_bonds = residue.comp_covalent_bonds('C', 'H')
+            ch_bonds[residue.mol_code] = comp_ch_bonds
+        if not comp_ch_bonds:
+            continue
+        hc_bonds = {}
+        for comp_c in comp_ch_bonds:
+            try:
+                c_atom = residue.atoms[comp_c]
+            except KeyError:
+                continue
+            for comp_h in comp_ch_bonds[comp_c]:
+                try:
+                    h_atom = residue.atoms[comp_h]
+                    hc_bonds[h_atom.res_label] = c_atom.res_label
+                except KeyError:
+                    continue
+        if not hc_bonds:
+            continue
+        for system in pi_codes:
+            if len(pi_codes[system]) > 5:
+                new_proj_cutoff = proj_cutoff
+            else:
+                new_proj_cutoff = proj_cutoff - 0.4
+            for bound_h in hc_bonds:
+                possible_interaction = CH_pi(donor=residue, donor_atoms={'C': hc_bonds[bound_h], 'H': bound_h},
+                                             acceptor=monomer, pi_system=system)
+                within_parameters, parameters = possible_interaction.parameters(dist_cutoff=dist_cutoff,
+                                                                                angle_cutoff=angle_cutoff,
+                                                                                proj_cutoff=new_proj_cutoff)
+                if within_parameters:
+                    interactions.append(possible_interaction)
+    return interactions
+
+
+def find_CH_pis_in_list(monomer_list, donor_codes=None, donor_categories=None, acceptor_codes=None,
+                        dist_cutoff=3.5, angle_cutoff=55, proj_cutoff=2, inter_chain=True):
+    """ Finds CH-pi interactions for all monomers in a chain that fit the specified parameters.
+
+    Parameters
+    ----------
+    monomer_list : list
+        List of AMPAL Monomers to be investigated.
+    donor_codes : list or None
+        Optional list of mol_codes of donor Monomers to be included.
+    donor_categories : list or None
+        Optional list of categories of donor Monomers to be included.
+    acceptor_codes : list or None
+        Optional list of mol_codes of Monomers to be included as acceptors.
+    dist_cutoff : float
+        Maximum accepted distance between proton and centre of pi system to constitute an interaction.
+    angle_cutoff : float
+        Maximum accepted angle between CH bond and normal pi system to constitute an interaction.
+    proj_cutoff : float
+        Maximum accepted distance between projection of CH proton and centre of pi system to constitute an interaction.
+    inter_chain : bool
+        If false, only includes CH-pi interactions where the acceptor is in the same chain as the monomer donor.
+
+    Returns
+    -------
+    all_interactions : dict
+        A dictionary of lists of found CH_pis for each Monomer with one or more interactions.
+    """
+    all_interactions = {}
+    for monomer in monomer_list:
+        if monomer.is_solvent:
+            continue
+        if donor_codes and monomer.mol_code not in donor_codes:
+            continue
+        if donor_categories and monomer.category not in donor_categories:
+            continue
+        interactions = find_CH_pi_interactions(monomer, acceptor_codes=acceptor_codes,
+                                               dist_cutoff=dist_cutoff, angle_cutoff=angle_cutoff,
+                                               proj_cutoff=proj_cutoff, inter_chain=inter_chain)
+        if interactions:
+            all_interactions[monomer] = interactions
+    return all_interactions
+
+
+def find_N_pis(polymer,dist_cutoff=3.22,angle_max=125,angle_min=95,dihedral_min=120):
+    """Finds n-->pi* interactions for all backbone carbonyls in a chain that fit the specified parameters
+
+    Parameters
+    ----------
+    polymer : Polymer
+        AMPAL polymer to be investigated
+    dist_cutoff : float
+        O...C distance cutoff
+    angle_max : int
+        Maximum O...Ci+1...Oi+1 angle
+    angle_min : int
+        Minimum O...Ci+1...Oi+1 angle
+    dihedral_min: int
+        Minimum CA---C---O---Ci+1 dihedral angle
+
+    Returns
+    -------
+
+    interactions : list
+
+        A list of N_PiStar_Interaction objects
+
+    """
+    interactions = []
+
+    for i in range(0,len(polymer)-1):
+
+        d = polymer[i]
+        a = polymer[i+1]
+
+        n_pistar = NPiStarInteraction(d,a)
+        if n_pistar.parameters()[0]:
+            interactions.append(n_pistar)
+
+    return interactions
 
 
 __author__ = 'Kieran L. Hudson, Christopher W. Wood, Gail J. Bartlett'
