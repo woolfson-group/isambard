@@ -149,7 +149,7 @@ def install_for_circleci(settings_path):
         "bude": {"cmd_files": "",
                  "internal_energy_binary": ""},
         "buff": {"default_force_field": "standard"},
-        "dssp": {"path": "/home/ubuntu/isambard_dev/dssp-2.0.4-linux-amd64"},
+        "dssp": {"path": "/home/ubuntu/isambard_dev/dssp-2.0.4"},
         "interactions_database": {"folder": ""},
         "naccess": {"path": ""},
         "profit": {"path": ""},
