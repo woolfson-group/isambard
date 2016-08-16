@@ -1,5 +1,6 @@
 import copy
 import os
+import ast
 
 import numpy
 from sqlalchemy import create_engine, Column, Float, Integer, String
@@ -9,6 +10,8 @@ from sqlalchemy.orm import sessionmaker
 from ampal.protein import flat_list_to_polymer
 from settings import global_settings
 from tools.geometry import unit_vector, rotation_matrix, distance, angle_between_vectors, dihedral
+
+#TODO change eval methods to ast, alter structure to handle new data structures
 
 # Start loop_db
 try:
