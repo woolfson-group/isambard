@@ -121,8 +121,10 @@ class SequenceDesigner:
         return aa_palette
 
     def make_sequence(self):
-        cannonical = ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W',
-                      'Y']
+        cannonical = ['A', 'C', 'D', 'E', 'F',
+                      'G', 'H', 'I', 'K', 'L',
+                      'M', 'N', 'P', 'Q', 'R',
+                      'S', 'T', 'V', 'W', 'Y']
         working_seq = []
         for aa in self.residue_p:
             if aa.istitle():
