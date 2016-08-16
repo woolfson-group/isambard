@@ -12,7 +12,7 @@ class ParmedToAmpalTestCase(unittest.TestCase):
                       for x in ['1ek9.pdb', '2ht0.pdb', '3qy1.pdb']]
         self.test_ampals = [isambard.ampal.convert_pdb_to_ampal(x) for x in test_files]
         test_parmeds = [parmed.formats.PDBFile.parse(x, skip_bonds=True) for x in test_files]
-        self.test_parmeds = [isambard.add_ons.parmed_to_ampal(x) for x in test_parmeds]
+        self.test_parmeds = [isambard.add_ons.parmed_to_ampal.parmed_to_ampal(x) for x in test_parmeds]
 
     def test_number_of_atoms(self):
         tests = []
