@@ -1,5 +1,6 @@
 import parmed
 from collections import OrderedDict
+import itertools
 import tempfile
 import os
 from copy import deepcopy
@@ -37,24 +38,26 @@ def parmed_to_ampal(parmed_structure, assembly_id=''):
     ampal_assembly = Assembly(assembly_id=assembly_id)
     monomer_list = []
     polymer_list = []
+    seen_chains = []
+    for r in filter(lambda x: not is_ligand(x), parmed_structure.residues):
+        if r.chain not in seen_chains:
+            seen_chains.append(r.chain)
+            if is_protein(r):
+                polymer_list.append(Polypeptide(polymer_id=r.chain, ampal_parent=ampal_assembly))
+            elif is_nucleic_acid(r):
+                polymer_list.append(Polynucleotide(polymer_id=r.chain, ampal_parent=ampal_assembly))
     for r in parmed_structure.residues:
         atoms = OrderedDict([(x.name, parmed_atom_to_ampal_atom(x)) for x in r.atoms])
+        polymer = next(filter(lambda x: x.id == r.chain, polymer_list), None)
         if is_protein(r):
             monomer_type = 'p'
         elif is_nucleic_acid(r):
             monomer_type = 'n'
         else:
             monomer_type = 'l'
-        polymer = next(filter(lambda x: x.id == r.chain, polymer_list), None)
-        if polymer is None:
-            polymer_dict = dict(polymer_id=r.chain, ampal_parent=ampal_assembly)
-            if monomer_type == 'p':
-                polymer = Polypeptide(**polymer_dict)
-            elif monomer_type == 'n':
-                polymer = Polynucleotide(**polymer_dict)
-            else:
-                polymer = LigandGroup(**polymer_dict)
-            polymer_list.append(polymer)
+            if polymer is None:
+                polymer = LigandGroup(polymer_id=r.chain, ampal_parent=ampal_assembly)
+                polymer_list.append(polymer)
         monomer_dict = dict(mol_code=r.name,
                             monomer_id=r.number,
                             insertion_code=' ' if not r.insertion_code else r.insertion_code,
