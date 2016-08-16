@@ -2,6 +2,7 @@ import numpy
 import networkx
 import itertools
 from collections import OrderedDict, Counter
+from scipy.cluster.hierarchy import linkage, fcluster
 
 from ampal.protein import Polypeptide
 from ampal.assembly import Assembly
@@ -11,7 +12,7 @@ from ampal.ampal_databases import element_data
 from ampal.analyse_protein import polypeptide_vector, crick_angles
 from add_ons.pacc import fit_heptad_register
 from tools.geometry import centre_of_mass, distance, angle_between_vectors, is_acute, find_foot, Axis, \
-    gen_sectors
+    gen_sectors, minimal_distance_between_lines
 from tools.graph_theory import sorted_connected_components
 
 
@@ -68,6 +69,46 @@ def side_chain_centres(assembly, masses=False):
                 centres[r.unique_id] = PseudoAtom(coordinates=centre, name=r.unique_id, ampal_parent=r)
             pseudo_monomers.append(PseudoMonomer(pseudo_atoms=centres, monomer_id=' ', ampal_parent=chain))
     return PseudoGroup(monomers=pseudo_monomers, ampal_parent=assembly)
+
+
+def cluster_helices(helices, cluster_distance=12.0):
+    """ Clusters helices according to the minimum distance between the line segments representing their backbone.
+
+    Notes
+    -----
+    Each helix is represented as a line segement joining the CA of its first Residue to the CA if its final Residue.
+    The minimal distance between pairwise line segments is calculated and stored in a condensed_distance_matrix.
+    This is clustered using the 'single' linkage metric
+     (all members of cluster i are at < cluster_distance away from at least one other member of cluster i).
+    Helices belonging to the same cluster are grouped together as values of the returned cluster_dict.
+
+    Parameters
+    ----------
+    helices: Assembly
+    cluster_distance: float
+
+    Returns
+    -------
+    cluster_dict: dict
+        Keys: int
+            cluster number
+        Values: [Polymer]
+
+    """
+    condensed_distance_matrix = []
+    for h1, h2 in itertools.combinations(helices, 2):
+        md = minimal_distance_between_lines(h1[0]['CA']._vector, h1[-1]['CA']._vector,
+                                            h2[0]['CA']._vector, h2[-1]['CA']._vector, segments=True)
+        condensed_distance_matrix.append(md)
+    z = linkage(condensed_distance_matrix, method='single')
+    clusters = fcluster(z, t=cluster_distance, criterion='distance')
+    cluster_dict = {}
+    for h, k in zip(helices, clusters):
+        if k not in cluster_dict:
+            cluster_dict[k] = [h]
+        else:
+            cluster_dict[k].append(h)
+    return cluster_dict
 
 
 def find_kihs(assembly, hole_size=4, cutoff=7.0, gen_segs=False):
@@ -172,7 +213,7 @@ class KnobGroup(PseudoGroup):
             len(self._monomers), 'KnobIntoHole' if len(self._monomers) == 1 else 'KnobsIntoHoles')
 
     @classmethod
-    def from_helices(cls, assembly, cutoff=7.0, segments=False, gen_segs=False):
+    def from_helices(cls, assembly, cutoff=7.0, min_helix_length=8, gen_segs=False):
         """ Generate KnobGroup from the helices in the assembly - classic socket functionality.
 
         Notes
@@ -190,6 +231,8 @@ class KnobGroup(PseudoGroup):
             Socket cutoff in Angstroms
         segments : bool
             If True, long helices are split into segments, each of which contatins no long gaps between knob residues.
+        min_helix_length : int
+            Minimum number of Residues in a helix considered for KIH packing.
 
         Returns
         -------
@@ -197,29 +240,29 @@ class KnobGroup(PseudoGroup):
         None if no helices or no kihs.
         """
         cutoff = float(cutoff)
-        helices = assembly.helices
-        if len(helices) == 0:
-            return None
-        helices.relabel_polymers([x.ampal_parent.id for x in helices])
-        kihs = find_kihs(helices, cutoff=cutoff, hole_size=4, gen_segs=gen_segs)
-        if len(kihs) == 0:
+        helices = Assembly([x for x in assembly.helices if len(x) >= min_helix_length])
+        if len(helices) <= 1:
             return None
         # reassign ampal_parents
+        helices.relabel_polymers([x.ampal_parent.id for x in helices])
         for i, h in enumerate(helices):
             h.number = i
             h.ampal_parent = h[0].ampal_parent
             for r in h.get_monomers():
                 r.tags['helix'] = h
-        if segments:
-            helix_segments = Assembly(assembly_id=assembly.id)
-            k_residues = set(itertools.chain.from_iterable([x.residues for x in kihs]))
-            for h in helices:
-                helix_segments += find_contiguous_packing_segments(h, k_residues)
-            helices = helix_segments
+        all_kihs = []
+        cluster_dict = cluster_helices(helices, cluster_distance=(cutoff + 10))
+        for k, v in cluster_dict.items():
+            if len(v) > 1:
+                kihs = find_kihs(helices, cutoff=cutoff, hole_size=4, gen_segs=gen_segs)
+                if len(kihs) == 0:
+                    continue
+                for x in kihs:
+                    all_kihs.append(x)
         instance = cls(ampal_parent=helices, cutoff=cutoff)
-        for x in kihs:
+        for x in all_kihs:
             x.ampal_parent = instance
-        instance._monomers = kihs
+        instance._monomers = all_kihs
         instance.relabel_monomers()
         return instance
 

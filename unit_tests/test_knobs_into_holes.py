@@ -13,7 +13,7 @@ class KnobGroupTestCase(unittest.TestCase):
     def test_number_of_kihs(self):
         """ Test there are 38 kihs found at 7.0 cutoff for 2ebo. """
         a = self.test_assembly
-        kg = isambard.add_ons.knobs_into_holes.KnobGroup.from_helices(a)
+        kg = isambard.add_ons.knobs_into_holes.KnobGroup.from_helices(a, min_helix_length=0)
         self.assertTrue(len(kg) == 38)
         kihs_locations = ''
         for i in range(len(a.helices)):
