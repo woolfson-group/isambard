@@ -1061,6 +1061,73 @@ def gen_sectors(coordinates, box_size):
     return sectors
 
 
+# TODO use this in combination with parsing PDB header files. Then write tests for it.
+def angle_and_axis_from_matrix(rot_mat, radians=False):
+    """ Extracts rotation angle and axis from 3 x 3 rotation matrix.
+
+    Notes
+    -----
+    Maths for this, and logical structure of angle = 180 special case adapted from:
+        http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToAngle/
+
+    Parameters
+    ----------
+    rot_mat : numpy.array of shape = (3, 3).
+    radians : bool
+        If False, angle returned in degrees, else radians.
+
+    Returns
+    -------
+    angle : float
+        Angle about which to rotate.
+    axis : numpy.array of length 3.
+        Axis about which to rotate.
+
+    Raises
+    ------
+    TypeError if matrix not numpy.ndarray
+    ValueError is matrix is not shape (3, 3).
+    """
+    rot_mat = rot_mat[:]
+    if not isinstance(rot_mat, numpy.ndarray):
+        raise TypeError("Expected type numpy.ndarray. Got type {}".format(type(rot_mat)))
+    if not rot_mat.shape == (3, 3):
+        raise ValueError("Expected 3 x 3 numpy array. Shape given = {}".format(rot_mat.shape))
+    angle = numpy.arccos((sum(numpy.diag(rot_mat)) - 1) / 2.0)
+    if not radians:
+        angle = numpy.rad2deg(angle)
+    if numpy.isclose(angle, 0.0):
+        # arbitrary axis for 0 rotation
+        axis = numpy.array([1.0, 0.0, 0.0])
+    elif numpy.isclose(angle, 180.0):
+        # special case for angle = 180 or -180.
+        max_diag_index = numpy.argmax(numpy.diag(rot_mat))
+        max_diag = rot_mat[max_diag_index][max_diag_index]
+        if numpy.isclose(max_diag, 0.0):
+            axis = numpy.array([1 / numpy.sqrt(2.0) for _ in range(3)])
+            axis[max_diag_index] = 0.0
+        else:
+            mdv = numpy.sqrt(max_diag + 1) / 2.0
+            xy = (rot_mat[0][1] + rot_mat[1][0]) / 4.0
+            xz = (rot_mat[0][2] + rot_mat[2][0]) / 4.0
+            yz = (rot_mat[1][2] + rot_mat[2][1]) / 4.0
+            if max_diag_index == 0:
+                axis = numpy.array([mdv, xy/mdv, xz/mdv])
+            elif max_diag_index == 1:
+                axis = numpy.array([xy/mdv, mdv, yz/mdv])
+            else:
+                axis = numpy.array([xz/mdv, yz/mdv, mdv])
+    else:
+        axis_denominator = numpy.sqrt((rot_mat[2][1] - rot_mat[1][2])**2
+                                      + (rot_mat[0][2] - rot_mat[2][0])**2
+                                      + (rot_mat[1][0] - rot_mat[0][1])**2)
+        axis = numpy.array([rot_mat[2][1] - rot_mat[1][2],
+                            rot_mat[0][2] - rot_mat[2][0],
+                            rot_mat[1][0] - rot_mat[0][1]])
+        axis /= axis_denominator
+    return angle, axis
+
+
 # TODO add DualQuaternion class to improve usage of find_transoformation - (screw axis representation of rotation and
 # translation. See https://en.wikipedia.org/wiki/Screw_axis and https://en.wikipedia.org/wiki/Dual_quaternion.
 class Quaternion:
