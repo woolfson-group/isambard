@@ -141,10 +141,10 @@ def sorted_connected_components(g, include_trivials=False):
     return components
 
 
-def get_graph_name(g):
+def get_graph_name(g, graph_list=None):
     # construct h fully in case of unorderable/unsortable edges.
     h = graph_to_plain_graph(g)
-    name = isomorphism_checker(h)
+    name = isomorphism_checker(h, graph_list=graph_list)
     if name is None:
         unknown_graph_list = get_unknown_graph_list()
         name = isomorphism_checker(h, graph_list=unknown_graph_list)
