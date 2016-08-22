@@ -291,7 +291,7 @@ class Polypeptide(Polymer):
         ValueError
             Raised if the sequence length does not match the number of monomers in the Polymer.
         """
-        from isambard.ampal.pdb_parser import convert_pdb_to_ampal
+        from ampal.pdb_parser import convert_pdb_to_ampal
         polymer_bb = self.backbone
         if len(sequence) != len(polymer_bb):
             raise ValueError('Sequence length ({}) does not match Polymer length ({}).'.format(
