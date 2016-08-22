@@ -5,8 +5,8 @@ import math
 import random
 import sys
 
-from isambard.ampal.secondary_structure.ta_polypeptide import TAPolypeptide
-from isambard.tools.geometry import distance
+from ampal.secondary_structure.ta_polypeptide import TAPolypeptide
+from tools.geometry import distance
 
 
 k_boltz = 1.987206504191549E-003  # Boltzmann constant

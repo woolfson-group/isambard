@@ -2,11 +2,11 @@ import copy
 import os
 
 import numpy
+from numpy import array
 from sqlalchemy import create_engine, Column, Float, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-from ampal.protein import flat_list_to_polymer
 from settings import global_settings
 from tools.geometry import unit_vector, rotation_matrix, distance, angle_between_vectors, dihedral
 
@@ -183,6 +183,8 @@ def loop_db_entry_to_ampal(loop_db_entry):
     loop_chain : base_ampal.Chain
         Chain object generated from a database object, extra info on the loop source is in tags.['loop_data'].
     """
+    from ampal.protein import flat_list_to_polymer
+
     l_ent = eval(loop_db_entry.entering_res)
     l_ext = eval(loop_db_entry.exiting_res)
     l_bb = eval(loop_db_entry.bb_coords)

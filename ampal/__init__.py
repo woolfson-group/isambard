@@ -7,3 +7,5 @@ from ampal.assembly import Assembly, AmpalContainer
 from ampal.pdb_parser import convert_pdb_to_ampal
 import ampal.analyse_protein
 from ampal.pseudo_atoms import PseudoGroup, PseudoMonomer, PseudoAtom
+
+import ampal.loops
