@@ -1025,7 +1025,7 @@ class Residue(Monomer):
 
     # TODO fix behaviour to allow option not to include residue itself
     def side_chain_environment(self, cutoff=4, include_neighbours=True, inter_chain=True, include_ligands=False,
-                               include_solvent=False):
+                               include_solvent=False, sc_only=False):
         """ Finds Monomers with any atom within the cutoff distance of the Residue side-chain.
 
         Notes
@@ -1044,6 +1044,8 @@ class Residue(Monomer):
             If true, Monomers classed as ligands but not identified as solvent will be included in the environment.
         include_solvent : bool
             If true, Monomers classed as categorised as solvent will be included in the environment.
+        sc_only :  Bool
+            If true, only includes side-chain atoms of nearby Residues. Overrides include solvent and include_ligands.
 
         Returns
         -------
@@ -1056,7 +1058,7 @@ class Residue(Monomer):
                                self.side_chain} for x in self.states}
         side_chain_monomer = Monomer(atoms=side_chain_dict, monomer_id=self.id, ampal_parent=self.ampal_parent)
         sc_environment = side_chain_monomer.environment(cutoff=cutoff, include_ligands=include_ligands,
-                                                        include_neighbours=include_neighbours,
+                                                        include_neighbours=include_neighbours, sc_only=sc_only,
                                                         include_solvent=include_solvent, inter_chain=inter_chain)
         return sc_environment
 
