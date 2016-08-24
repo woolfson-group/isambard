@@ -1056,10 +1056,10 @@ class Residue(Monomer):
         sc_environment : list
             List of monomers within cutoff distance of side-chain.
         """
-        if self.mol_code == 'GLY':
-            return [self]
         side_chain_dict = {x: {y: self.states[x][y] for y in self.states[x] if self.states[x][y] in
                                self.side_chain} for x in self.states}
+        if len(side_chain_dict) == 0:
+            return [self]
         side_chain_monomer = Monomer(atoms=side_chain_dict, monomer_id=self.id, ampal_parent=self.ampal_parent)
         sc_environment = side_chain_monomer.environment(cutoff=cutoff, include_ligands=include_ligands,
                                                         include_neighbours=include_neighbours, sc_only=sc_only,
