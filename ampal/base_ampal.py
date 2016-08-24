@@ -512,7 +512,7 @@ class Monomer(BaseAmpal):
         return nearby_residues
 
     def environment(self, cutoff=4.0, include_self=False, include_neighbours=True, inter_chain=True,
-                    include_ligands=False, include_solvent=False):
+                    include_ligands=False, include_solvent=False, sc_only=False):
         """Returns the residues with any atom within a defined distance of any atom of the monomer.
 
         Parameters
@@ -529,6 +529,8 @@ class Monomer(BaseAmpal):
             If true, Monomers classed as ligands but not identified as solvent will be included in the environment.
         include_solvent : bool
             If true, Monomers classed as categorised as solvent will be included in the environment.
+        sc_only :  Bool
+            If true, only includes side-chain atoms of nearby Residues. Overrides include solvent and include_ligands.
 
         Raises
         ------
@@ -549,7 +551,7 @@ class Monomer(BaseAmpal):
         elif not include_ligands:
             solvent_list = [x for x in group.get_monomers() if x.is_solvent]
             group = Polymer(monomers=[x for x in group.get_monomers(ligands=False)] + solvent_list)
-        nearby_residues = self.close_monomers(group, cutoff=cutoff)
+        nearby_residues = self.close_monomers(group, cutoff=cutoff, sc_only=sc_only)
         if include_self:
             if self not in nearby_residues:
                 nearby_residues.append(self)
