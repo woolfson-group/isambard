@@ -479,7 +479,7 @@ class Monomer(BaseAmpal):
         comp_pi_sys = component_pi_systems(self.mol_code)
         return comp_pi_sys
 
-    def close_monomers(self, group, cutoff=4.0):
+    def close_monomers(self, group, cutoff=4.0, sc_only=False):
         """Returns a list of Monomers from within a cut off distance of the Monomer
 
         Parameters
@@ -488,6 +488,8 @@ class Monomer(BaseAmpal):
             Group to be search for Monomers that are close to this Monomer.
         cutoff: float
             Distance cut off.
+        sc_only :  Bool
+            If true, only includes side-chain atoms of nearby Residues.
 
         Returns
         -------
@@ -498,8 +500,15 @@ class Monomer(BaseAmpal):
         for self_atom in self.atoms.values():
             nearby_atoms = group.is_within(cutoff, self_atom)
             for res_atom in nearby_atoms:
-                if res_atom.ampal_parent not in nearby_residues:
-                    nearby_residues.append(res_atom.ampal_parent)
+                if res_atom.ampal_parent in nearby_residues:
+                    continue
+                if sc_only:
+                    try:
+                        if res_atom not in res_atom.ampal_parent.side_chain:
+                            continue
+                    except AttributeError:
+                        continue
+                nearby_residues.append(res_atom.ampal_parent)
         return nearby_residues
 
     def environment(self, cutoff=4.0, include_self=False, include_neighbours=True, inter_chain=True,
