@@ -995,7 +995,7 @@ class Residue(Monomer):
 
         Notes
         -----
-        Returns empty list for glycine.
+        Returns alpha protons for glycine if present, else empty list.
 
         Returns
         -------
@@ -1021,6 +1021,10 @@ class Residue(Monomer):
                 else:
                     warning_message += " Empty side-chain."
                 warnings.warn(warning_message, MalformedPDBWarning)
+        else:
+            gly_protons = ['HA2', 'HA3']
+            if any([x in self.atoms for x in gly_protons]):
+                side_chain_atoms = [self.atoms[x] for x in gly_protons if x in self.atoms]
         return side_chain_atoms
 
     # TODO fix behaviour to allow option not to include residue itself
