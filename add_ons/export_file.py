@@ -64,7 +64,8 @@ def output_with_alignment_tags(monomer_list, tagged_monomer=None, output_path=''
 
 
 def output_environment(monomer, output_path='', tag_monomer=False, strip_states=False, include_neighbours=True,
-                       include_ligands=True, include_solvent=True, inter_chain=True, cutoff=4, side_chain=False):
+                       include_ligands=True, include_solvent=True, inter_chain=True, cutoff=4, side_chain=False,
+                       sc_only=False):
     """ Output a monomer with its nearby residues as a PDB file.
 
     Parameters
@@ -87,6 +88,10 @@ def output_environment(monomer, output_path='', tag_monomer=False, strip_states=
         If true, Monomers classed as categorised as solvent will be included in the environment
     cutoff : float
         Maximum inter-atom distance for nearby Monomer to be included
+    side_chain : bool
+        If true, only includes monomers near the Monomer side chain
+    sc_only : bool
+        If true, only includes residues with side-chain atoms near the monomer
 
     Returns
     -------
@@ -98,16 +103,13 @@ def output_environment(monomer, output_path='', tag_monomer=False, strip_states=
         if output_file.exists():
             return output_file
     if side_chain:
-        if monomer.mol_code == 'GLY':
-            monomer_list = [monomer]
-        else:
-            monomer_list = monomer.side_chain_environment(cutoff=cutoff, include_neighbours=include_neighbours,
-                                                          inter_chain=inter_chain, include_ligands=include_ligands,
-                                                          include_solvent=include_solvent)
+        monomer_list = monomer.side_chain_environment(cutoff=cutoff, include_neighbours=include_neighbours,
+                                                      inter_chain=inter_chain, include_ligands=include_ligands,
+                                                      include_solvent=include_solvent, sc_only=sc_only)
     else:
         monomer_list = monomer.environment(cutoff=cutoff, include_self=True, include_neighbours=include_neighbours,
                                            inter_chain=inter_chain, include_ligands=include_ligands,
-                                           include_solvent=include_solvent)
+                                           include_solvent=include_solvent, sc_only=sc_only)
     if tag_monomer:
         tagged_monomer = monomer
     else:
@@ -143,7 +145,6 @@ def output_environment_spheres(monomer, output_path='', cutoff=4, include_neighb
     acceptor_codes : list
     donor_codes : list
         Lists of CH-pi donors and acceptors to include if they are tagged.
-
 
     Returns
     -------
