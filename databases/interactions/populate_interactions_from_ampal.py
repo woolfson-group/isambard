@@ -134,6 +134,21 @@ def add_monomer_environment(monomer, cutoff=4, include_neighbours=True, inter_ch
     return monomer_entry.environment
 
 
+def add_residue_sc_environment(residue, cutoff=4, include_neighbours=True, inter_chain=True, include_ligands=False,
+                               include_solvent=False, session=interaction_session, sc_only=False):
+    """ Adds details of an AMPAL Residue's side-chain environment to the interactions database."""
+    residue_entry, new_residue = get_or_create_monomer(residue, session=session)
+    for res in residue.side_chain_environment(cutoff=cutoff, include_neighbours=include_neighbours,
+                                              inter_chain=inter_chain, include_ligands=include_ligands,
+                                              include_solvent=include_solvent, sc_only=sc_only):
+        if res is residue:
+            continue
+        res_entry, new_res = get_or_create_monomer(res, session=session)
+        if res_entry not in residue_entry.environment:
+            residue_entry.environment.append(res_entry)
+    return residue_entry.environment
+
+
 def get_or_create_amino_acid(residue, session=interaction_session):
     """ Adds an AMPAL Residue to the AminoAcid table of the interactions database.
 
