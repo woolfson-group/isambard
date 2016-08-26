@@ -995,7 +995,7 @@ class Residue(Monomer):
 
         Notes
         -----
-        Returns empty list for glycine.
+        Returns alpha protons for glycine if present, else empty list.
 
         Returns
         -------
@@ -1021,11 +1021,15 @@ class Residue(Monomer):
                 else:
                     warning_message += " Empty side-chain."
                 warnings.warn(warning_message, MalformedPDBWarning)
+        else:
+            gly_protons = ['HA2', 'HA3']
+            if any([x in self.atoms for x in gly_protons]):
+                side_chain_atoms = [self.atoms[x] for x in gly_protons if x in self.atoms]
         return side_chain_atoms
 
     # TODO fix behaviour to allow option not to include residue itself
     def side_chain_environment(self, cutoff=4, include_neighbours=True, inter_chain=True, include_ligands=False,
-                               include_solvent=False):
+                               include_solvent=False, sc_only=False):
         """ Finds Monomers with any atom within the cutoff distance of the Residue side-chain.
 
         Notes
@@ -1044,19 +1048,21 @@ class Residue(Monomer):
             If true, Monomers classed as ligands but not identified as solvent will be included in the environment.
         include_solvent : bool
             If true, Monomers classed as categorised as solvent will be included in the environment.
+        sc_only :  Bool
+            If true, only includes side-chain atoms of nearby Residues. Overrides include solvent and include_ligands.
 
         Returns
         -------
         sc_environment : list
             List of monomers within cutoff distance of side-chain.
         """
-        if self.mol_code == 'GLY':
-            return [self]
         side_chain_dict = {x: {y: self.states[x][y] for y in self.states[x] if self.states[x][y] in
                                self.side_chain} for x in self.states}
+        if len(side_chain_dict) == 0:
+            return [self]
         side_chain_monomer = Monomer(atoms=side_chain_dict, monomer_id=self.id, ampal_parent=self.ampal_parent)
         sc_environment = side_chain_monomer.environment(cutoff=cutoff, include_ligands=include_ligands,
-                                                        include_neighbours=include_neighbours,
+                                                        include_neighbours=include_neighbours, sc_only=sc_only,
                                                         include_solvent=include_solvent, inter_chain=inter_chain)
         return sc_environment
 
