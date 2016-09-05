@@ -385,7 +385,7 @@ class OptPSO:
         self.assign_fitnesses(self.population)
         for part in self.population:
             part.best = creator.Particle(part)
-            part.best.fitness = part.fitness
+            part.best.fitness.values = part.fitness.values
         # self.pop.gbestfit = max(part.fitness for part in self.pop)
         # self.pop.gbest = max(enumerate(self.pop), key=lambda x: self.pop[x[0]].fitness)[1]
 
