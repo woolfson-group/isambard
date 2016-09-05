@@ -7,7 +7,6 @@ from deap import base, creator, tools
 from external_programs.profit import run_profit
 from concurrent import futures
 
-# TODO: unit tests!
 
 class BaseOptimizer:
 
