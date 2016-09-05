@@ -10,3 +10,5 @@ hypothesis
 bs4
 parmed
 scipy
+recommonmark
+numpydoc
