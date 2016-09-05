@@ -375,7 +375,7 @@ class OptPSO:
             for i in range(len(self.pop)):
                 self.pop[i].index = i
                 self.pop[i].neighbours = list(set([(i-x) % len(self.pop)
-                                                   for x in range(1, self._params['neighbours']+1)] + i +
+                                                   for x in range(1, self._params['neighbours']+1)] + [i] +
                                                   [(i+x) % len(self.pop)
                                                    for x in range(1, self._params['neighbours']+1)]))
         else:
