@@ -23,6 +23,7 @@ try:
     import tools.statistics
     import tools.geometry as geometry
     import optimisation
+    import databases
     with open('logo.txt', 'r') as inf:
         logo = ''.join(inf.readlines()[:51])
 finally:
