@@ -562,6 +562,7 @@ class OptCMAES:
         self.toolbox.register("individual", self.make_individual)
         self.toolbox.register("generate", self.generate, self.toolbox.individual)
         self.toolbox.register("population", tools.initRepeat, list, self.initial_individual)
+        self.toolbox.register("update", self.update)
         self.population = self.toolbox.population(n=self._params['popsize'])
         self.assign_fitnesses(self.population)
         self._params['model_count'] += len(self.population)
@@ -584,6 +585,7 @@ class OptCMAES:
                 if self.population[i][j] < -1:
                     self.population[i][j] = -1
         self.assign_fitnesses(self.population)
+        self.toolbox.update(self.population)
         self._params['model_count'] += len(self.population)
 
     def make_individual(self, paramlist):
