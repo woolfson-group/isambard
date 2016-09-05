@@ -69,8 +69,8 @@ class BaseOptimizer:
         self.initialize_pop()
         for g in range(self._params['numgen']):
             self.update_pop()
-            self.halloffame.update(self.pop)
-            self.logbook.record(gen=g, evals=self._params['evals'], **self.stats.compile(self.pop))
+            self.halloffame.update(self.population)
+            self.logbook.record(gen=g, evals=self._params['evals'], **self.stats.compile(self.population))
             print(self.logbook.stream)
         end_time = datetime.datetime.now()
         time_taken = end_time - start_time
@@ -286,15 +286,15 @@ class OptDE:
         """Assigns indices to individuals in population where neighbourhood model is used and assigns initial fitness"""
         self.toolbox.register("individual", self.generate)
         self.toolbox.register("population", tools.initRepeat, list, self.toolbox.individual)
-        self.pop = self.toolbox.population(n=self._params['popsize'])
+        self.population = self.toolbox.population(n=self._params['popsize'])
         if self._params['neighbours']:
-            for i in range(len(self.pop)):
-                self.pop[i].ident = i
-                self.pop[i].neighbours = list(set([(i-x) % len(self.pop)
+            for i in range(len(self.population)):
+                self.population[i].ident = i
+                self.population[i].neighbours = list(set([(i-x) % len(self.population)
                                                    for x in range(1, self._params['neighbours']+1)] +
-                                                  [(i+x) % len(self.pop)
+                                                  [(i+x) % len(self.population)
                                                    for x in range(1, self._params['neighbours']+1)]))
-        self.assign_fitnesses(self.pop)
+        self.assign_fitnesses(self.population)
 
     def crossover(self, ind):
         """Used by the evolution process to generate a new individual. This is a tweaked version of the classical DE
@@ -310,9 +310,9 @@ class OptDE:
             An individual representing a candidate solution, to be assigned a fitness.
         """
         if self._params['neighbours']:
-            a, b, c = random.sample([self.pop[i] for i in ind.neighbours], 3)
+            a, b, c = random.sample([self.population[i] for i in ind.neighbours], 3)
         else:
-            a, b, c = random.sample(self.pop, 3)
+            a, b, c = random.sample(self.population, 3)
         y = self.toolbox.clone(a)
         y.ident = ind.ident
         y.neighbours = ind.neighbours
@@ -337,13 +337,13 @@ class OptDE:
         :return:
         """
         candidates = []
-        for ind in self.pop:
+        for ind in self.population:
             candidates.append(self.crossover(ind))
         self._params['model_count'] += len(candidates)
         self.assign_fitnesses(candidates)
-        for i in range(len(self.pop)):
-            if candidates[i].fitness > self.pop[i].fitness:
-                self.pop[i] = candidates[i]
+        for i in range(len(self.population)):
+            if candidates[i].fitness > self.population[i].fitness:
+                self.population[i] = candidates[i]
 
 
 class OptPSO:
@@ -447,7 +447,7 @@ class OptPSO:
         for part in invalid_particles:
             self.update_particle(part)
         self.population[:] = valid_particles + invalid_particles
-        self.pop.sort(key=lambda x: x.ident)  # shouldn't need to sort?
+        self.population.sort(key=lambda x: x.ident)  # shouldn't need to sort?
         for part in self.population:
             if part.best.fitness < part.fitness:
                 part.best = creator.Particle(part)
@@ -488,17 +488,17 @@ class OptGA:
         """
         self.toolbox.register("individual", self.generate)
         self.toolbox.register("population", tools.initRepeat, list, self.toolbox.individual)
-        self.pop = self.toolbox.population(n=self._params['popsize'])
-        self.assign_fitnesses(self.pop)
-        self._params['model_count'] += len(self.pop)
+        self.population = self.toolbox.population(n=self._params['popsize'])
+        self.assign_fitnesses(self.population)
+        self._params['model_count'] += len(self.population)
 
     def update_pop(self):
-        offspring = list(map(self.toolbox.clone, self.pop))
+        offspring = list(map(self.toolbox.clone, self.population))
         # offspring.sort(reverse=True, key=lambda x: x.fitness)
 
         for _ in range(self._params['popsize']//2):
             if random.random() < self._params['cxpb']:
-                child1, child2 = self.toolbox.select(self.pop, 2, 6)
+                child1, child2 = self.toolbox.select(self.population, 2, 6)
                 temp1 = self.toolbox.clone(child1)
                 temp2 = self.toolbox.clone(child2)
                 self.toolbox.mate(temp1, temp2)
@@ -531,7 +531,7 @@ class OptGA:
         if len(self.halloffame) != 0:
             if offspring[0].fitness < self.halloffame[0].fitness:  # elitism- if none beat best so far it is reinserted
                 offspring.insert(0, self.halloffame[0])
-        self.pop[:] = offspring[:self._params['popsize']]
+        self.population[:] = offspring[:self._params['popsize']]
 
 
 class OptCMAES:
@@ -558,9 +558,9 @@ class OptCMAES:
         self.toolbox.register("individual", self.make_individual)
         self.toolbox.register("generate", self.generate, self.toolbox.individual)
         self.toolbox.register("population", tools.initRepeat, list, self.initial_individual)
-        self.pop = self.toolbox.population(n=self._params['popsize'])
-        self.assign_fitnesses(self.pop)
-        self._params['model_count'] += len(self.pop)
+        self.population = self.toolbox.population(n=self._params['popsize'])
+        self.assign_fitnesses(self.population)
+        self._params['model_count'] += len(self.population)
 
     def initial_individual(self):
         """
@@ -573,14 +573,14 @@ class OptCMAES:
     def update_pop(self):
         self.toolbox.generate()
         #simple bound checking
-        for i in range(len(self.pop)):
-            for j in range(len(self.pop[i])):
-                if self.pop[i][j] > 1:
-                    self.pop[i][j] = 1
-                if self.pop[i][j] < -1:
-                    self.pop[i][j] = -1
-        self.assign_fitnesses(self.pop)
-        self._params['model_count'] += len(self.pop)
+        for i in range(len(self.population)):
+            for j in range(len(self.population[i])):
+                if self.population[i][j] > 1:
+                    self.population[i][j] = 1
+                if self.population[i][j] < -1:
+                    self.population[i][j] = -1
+        self.assign_fitnesses(self.population)
+        self._params['model_count'] += len(self.population)
 
     def make_individual(self, paramlist):
         part = creator.Individual(paramlist)
@@ -669,7 +669,7 @@ class OptCMAES:
         """
         arz = numpy.random.standard_normal((self.lambda_, self.dim))
         arz = self.centroid + self.sigma * numpy.dot(arz, self.BD.T)
-        self.pop = list(map(func, arz))
+        self.population = list(map(func, arz))
 
     def update(self, population):
         """Update the current covariance matrix strategy from the
