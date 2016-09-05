@@ -444,14 +444,18 @@ class OptPSO:
         for part in valid_particles:
             self.update_particle(part)
         self.assign_fitnesses(valid_particles)
+        for part in valid_particles:
+            if part.fitness > part.best.fitness:
+                part.best = creator.Particle(part)
+                part.best.fitness = part.fitness
         for part in invalid_particles:
             self.update_particle(part)
         self.population[:] = valid_particles + invalid_particles
         self.population.sort(key=lambda x: x.ident)  # shouldn't need to sort?
-        for part in self.population:
-            if part.best.fitness < part.fitness:
-                part.best = creator.Particle(part)
-                part.best.fitness.values = part.fitness.values
+        # for part in self.population:
+        #     if part.best.fitness < part.fitness:
+        #         part.best = creator.Particle(part)
+        #         part.best.fitness.values = part.fitness.values
         # self.pop.gbestfit = max(part.fitness for part in self.pop) #this is the current best, not the all time best
         # self.pop.gbest = max(enumerate(self.pop), key=lambda x: self.pop[x[0]].fitness)[1]  #but these aren't used anyway
 
