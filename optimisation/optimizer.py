@@ -278,7 +278,7 @@ class OptDE:
         particle object
         """
         ind = creator.Individual([random.uniform(-1, 1) for _ in range(len(self._params['value_means']))])
-        ind.index = None
+        ind.ident = None
         ind.neighbours = None
         return ind
 
@@ -289,7 +289,7 @@ class OptDE:
         self.pop = self.toolbox.population(n=self._params['popsize'])
         if self._params['neighbours']:
             for i in range(len(self.pop)):
-                self.pop[i].index = i
+                self.pop[i].ident = i
                 self.pop[i].neighbours = list(set([(i-x) % len(self.pop)
                                                    for x in range(1, self._params['neighbours']+1)] +
                                                   [(i+x) % len(self.pop)
@@ -314,13 +314,13 @@ class OptDE:
         else:
             a, b, c = random.sample(self.pop, 3)
         y = self.toolbox.clone(a)
-        y.index = ind.index
+        y.ident = ind.ident
         y.neighbours = ind.neighbours
         del y.fitness.values
         # y should now be a copy of ind with the vector elements from a
-        index = random.randrange(len(self._params['value_means']))
+        ident = random.randrange(len(self._params['value_means']))
         for i, value in enumerate(y):
-            if i == index or random.random() < self._params['cxpb']:
+            if i == ident or random.random() < self._params['cxpb']:
                 entry = a[i] + random.lognormvariate(-1.2, 0.5)*self._params['diff_weight']*(b[i]-c[i])
                 tries = 0
                 while abs(entry) > 1.0:
@@ -354,7 +354,7 @@ class OptPSO:
     bounds, but not assigning them a fitness in this case.
     """
     def __init__(self, **kwargs):
-        self.pop = None
+        self.population = None
         super().__init__()
         self._params.update(**kwargs)
         self._params.setdefault('output_path', None)
@@ -370,24 +370,24 @@ class OptPSO:
         Generates initial population with random positions and speeds.
         :return:
         """
-        self.pop = self.toolbox.swarm(n=self._params['popsize'])
+        self.population = self.toolbox.swarm(n=self._params['popsize'])
         if self._params['neighbours']:
-            for i in range(len(self.pop)):
-                self.pop[i].index = i
-                self.pop[i].neighbours = list(set([(i-x) % len(self.pop)
-                                                   for x in range(1, self._params['neighbours']+1)] + [i] +
-                                                  [(i+x) % len(self.pop)
+            for i in range(len(self.population)):
+                self.population[i].ident = i
+                self.population[i].neighbours = list(set([(i - x) % len(self.population)
+                                                          for x in range(1, self._params['neighbours']+1)] + [i] +
+                                                         [(i+x) % len(self.population)
                                                    for x in range(1, self._params['neighbours']+1)]))
         else:
-            for i in range(len(self.pop)):
-                self.pop[i].index = i
-                self.pop[i].neighbours = [x for x in range(len(self.pop))]
-        self.assign_fitnesses(self.pop)
-        for part in self.pop:
+            for i in range(len(self.population)):
+                self.population[i].ident = i
+                self.population[i].neighbours = [x for x in range(len(self.population))]
+        self.assign_fitnesses(self.population)
+        for part in self.population:
             part.best = creator.Particle(part)
             part.best.fitness = part.fitness
-        self.pop.gbestfit = max(part.fitness for part in self.pop)
-        self.pop.gbest = max(enumerate(self.pop), key=lambda x: self.pop[x[0]].fitness)[1]
+        # self.pop.gbestfit = max(part.fitness for part in self.pop)
+        # self.pop.gbest = max(enumerate(self.pop), key=lambda x: self.pop[x[0]].fitness)[1]
 
     def generate(self):
         """Generates a particle using the creator function. Position and speed are uniformly randomly seeded within
@@ -402,7 +402,7 @@ class OptPSO:
                       for _ in range(len(self._params['value_means']))]
         part.smin = -self._params['max_speed']
         part.smax = self._params['max_speed']
-        part.index = None
+        part.ident = None
         part.neighbours = None
         return part
 
@@ -410,7 +410,7 @@ class OptPSO:
         """Constriction factor update particle method that looks for a list of neighbours attached to a particle and
         uses the particle's best position and that of the best neighbour.
         """
-        neighbour_pool = [self.pop[i] for i in part.neighbours]
+        neighbour_pool = [self.population[i] for i in part.neighbours]
         best_neighbour = max(neighbour_pool, key=lambda x: x.best.fitness)
         ce1 = (c * random.uniform(0, 1) for _ in range(len(part)))
         ce2 = (c * random.uniform(0, 1) for _ in range(len(part)))
@@ -435,7 +435,7 @@ class OptPSO:
         """
         valid_particles = []
         invalid_particles = []
-        for part in self.pop:
+        for part in self.population:
             if any(x > 1 or x < -1 for x in part):
                 invalid_particles.append(part)
             else:
@@ -446,14 +446,14 @@ class OptPSO:
         self.assign_fitnesses(valid_particles)
         for part in invalid_particles:
             self.update_particle(part)
-        self.pop[:] = valid_particles + invalid_particles
-        self.pop.sort(key=lambda x: x.index)
-        for part in self.pop:
+        self.population[:] = valid_particles + invalid_particles
+        self.pop.sort(key=lambda x: x.ident)  # shouldn't need to sort?
+        for part in self.population:
             if part.best.fitness < part.fitness:
                 part.best = creator.Particle(part)
                 part.best.fitness.values = part.fitness.values
-        self.pop.gbestfit = max(part.fitness for part in self.pop)
-        self.pop.gbest = max(enumerate(self.pop), key=lambda x: self.pop[x[0]].fitness)[1]
+        # self.pop.gbestfit = max(part.fitness for part in self.pop) #this is the current best, not the all time best
+        # self.pop.gbest = max(enumerate(self.pop), key=lambda x: self.pop[x[0]].fitness)[1]  #but these aren't used anyway
 
 
 class OptGA:
@@ -584,7 +584,7 @@ class OptCMAES:
 
     def make_individual(self, paramlist):
         part = creator.Individual(paramlist)
-        part.index = None
+        part.ident = None
         return part
 
     def initialize_cma_es(self, **kwargs):
