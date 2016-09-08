@@ -1,5 +1,6 @@
 import copy
 import os
+import ast
 
 import numpy
 from numpy import array
@@ -9,6 +10,8 @@ from sqlalchemy.orm import sessionmaker
 
 from settings import global_settings
 from tools.geometry import unit_vector, rotation_matrix, distance, angle_between_vectors, dihedral
+
+#TODO change eval methods to ast, alter structure to handle new data structures
 
 # Start loop_db
 try:
