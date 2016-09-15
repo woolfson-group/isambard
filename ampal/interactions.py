@@ -102,6 +102,28 @@ class HydrogenBond(NonCovalentInteraction):
         return '<Hydrogen Bond between ({}{}) {}-{} ||||| {}-{} ({}{})>'.format(
             dm.id, dc.id, dm.mol_code, self.donor.res_label, self.acceptor.res_label, am.mol_code, am.id, ac.id)
 
+class SaltBridge(NonCovalentInteraction):
+    """Defines a salt bridge in terms of a negative and positive atom"""
+
+    def __init__(self, donor,acceptor,dist):
+        super().__init__(donor,acceptor,dist)
+
+    @property
+    def pos_monomer(self):
+        return self._a.ampal_parent
+
+    @property
+    def neg_monomer(self):
+        return self._b.ampal_parent
+
+    def __repr__(self):
+        dm = self.donor.ampal_parent
+        dc = dm.ampal_parent
+        am = self.acceptor.ampal_parent
+        ac = am.ampal_parent
+
+        return '<Salt Bridge between ({}{}) {}-{} ||||| {}-{} ({}{})'.format(
+                dm.id, dc.id, dm.mol_code, self.donor.res_label, self.acceptor.res_label, am.mol_code, am.id, ac.id)
 
 class PiBase(object):
     """ A container for all types of interaction, with donor and acceptor as AMPAL Monomers."""
@@ -746,5 +768,69 @@ def find_N_pis(polymer,dist_cutoff=3.22,angle_max=125,angle_min=95,dihedral_min=
 
     return interactions
 
+def salt_bridges(atoms,dist_range=(2.5,4.0)):
+
+    """Defines salt bridges as between positively and negatively charged residues
+
+    Parameters
+    ----------
+    atoms : []
+        list of AMPAL atom objects to investigate
+    dist_range: ()
+        min,max values for salt bridge
+
+    Returns
+    -------
+    sbs : []
+        list of SaltBridge objects
+
+    """
+    salt_bridge_pos = {'ARG' : ['NH2','NH1','NE'], 'LYS' : ['NZ']}
+    salt_bridge_neg = {'ASP' : ['OD1','OD2'], 'GLU' : ['OE1','OE2']}
+
+    pos = []
+    neg = []
+
+    for atom in atoms:
+        if atom.ampal_parent.mol_code in salt_bridge_neg:
+            if atom.res_label in salt_bridge_neg[atom.ampal_parent.mol_code]:
+                neg.append(atom)
+
+        elif atom.ampal_parent.mol_code in salt_bridge_pos:
+            if atom.res_label in salt_bridge_pos[atom.ampal_parent.mol_code]:
+                pos.append(atom)
+
+    sbs = []
+    for p in pos:
+        for n in neg:
+            dist = distance(p._vector, n._vector)
+            if dist_range[0] < dist < dist_range[1]:
+                sb = SaltBridge(p,n,dist)
+                sbs.append(sb)
+
+    return sbs
+
+def find_salt_bridges(ampal, dist_range=(2.5,4.0)):
+
+    """Finds salt bridges in an ampal object
+
+    Parameters
+    ----------
+    ampal : AMPAL object
+    dist_range : []
+        distance range for salt bridge
+
+    Returns
+    -------
+    sbs : []
+        list of salt bridges in ampal object
+
+    """
+
+    sectors = gen_sectors(ampal.get_atoms(), dist_range[1]*1.1)
+    sbs=[]
+    for sector in sectors.values():
+        sbs.extend(salt_bridges(sector,dist_range))
+    return list(set(sbs))
 
 __author__ = 'Kieran L. Hudson, Christopher W. Wood, Gail J. Bartlett'
