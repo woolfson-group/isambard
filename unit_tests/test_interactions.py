@@ -49,7 +49,7 @@ class SaltBridgeFinderTestCase(unittest.TestCase):
         """Find number of salt bridges in 3qy1"""
         test_path = os.path.join(os.path.dirname(isambard.__file__), 'unit_tests', 'testing_files', '3qy1.pdb')
         test_pdb = isambard.ampal.convert_pdb_to_ampal(test_path)
-        self.assertEqual(len(isambard.ampal.interactions.find_salt_bridges(test_pdb),29))
+        self.assertEqual(len(isambard.ampal.interactions.find_salt_bridges(test_pdb)),29)
 
 if __name__ == '__main__':
     unittest.main()
