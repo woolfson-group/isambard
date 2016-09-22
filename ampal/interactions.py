@@ -736,6 +736,17 @@ def find_CH_pis_in_list(monomer_list, donor_codes=None, donor_categories=None, a
 
 
 def find_carbonyls(ampal):
+    """Find all carbonyl bonds in an ampal object and return them
+    Parameters
+    ----------
+    ampal : AMPAL object
+
+    Returns
+    -------
+    carbonyls : list
+        list of CovalentBond objects
+
+    """
 
     cvs = find_covalent_bonds(ampal)
     carbonyls = []
@@ -752,7 +763,7 @@ def find_carbonyls(ampal):
 def find_N_pis(polymer,dist_cutoff=3.22,angle_max=125,angle_min=95,dihedral_min=120):
     """Finds n-->pi* interactions for all backbone carbonyls in a chain that fit the specified parameters
     Will not currently find n->pi* within residues (e.g. Glu OE1 to Glu C=O)
-    
+
     Parameters
     ----------
     polymer : Polymer
