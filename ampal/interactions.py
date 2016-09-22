@@ -108,7 +108,8 @@ class NPiStarInteraction(object):
     backbone n-pi* interactions."""
 
     def __init__(self, carbonyl_donor, carbonyl_acceptor):
-        super(NPiStarInteraction,self).__init__(carbonyl_donor,carbonyl_acceptor)
+        self.carbonyl_donor=carbonyl_donor
+        self.carbonyl_acceptor=carbonyl_acceptor
 
     def __repr__(self):
         c1 = self.carbonyl_donor.a
