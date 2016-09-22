@@ -41,6 +41,7 @@ class ComponentTable(ComponentBase):
     category = Column(String(255))
     hbond_donors_added = Column(Boolean)
     hbond_acceptors_added = Column(Boolean)
+    chbond_donors_added=Column(Boolean)
 
     parent = relationship('ComponentTable', secondary=modified_table, uselist=False,
                           primaryjoin=modified_table.c.modified_id == id,
@@ -193,6 +194,22 @@ class HBondDonorTable(ComponentBase):
         return '<H-bond donor(proton={0}, heteroatom={1}, component={2})>'.format(
             self.proton.atom_label, self.heteroatom.atom_label, self.component.code)
 
+class CHBondDonorTable(ComponentBase):
+
+    __tablename__ = 'chbond_donor'
+
+    id = Column(Integer,primary_key=True,unique=True)
+    component_id = Column(Integer, ForeignKey('component.id'), nullable=False)
+    proton_id = Column(Integer,ForeignKey('atom.id'), nullable=False)
+    heteroatom_id = Column(Integer,ForeignKey('atom.id'),nullable=False)
+
+    component = relationship('ComponentTable',backref='chbond_donors')
+    proton = relationship('AtomTable',foreign_keys=[proton_id], backref='chbond_donor')
+    heteroatom = relationship('AtomTable', foreign_keys=[heteroatom_id],backref='chbond_donor_protons')
+
+    def __repr__(self):
+        return '<CH-bond donor(proton={0}, heteroatom={1}, component={2})>'.format(
+            self.proton.atom_label, self.heteroatom.atom_label, self.component.code)
 
 class HBondAcceptorTable(ComponentBase):
     __tablename__ = 'hbond_acceptor'
@@ -574,6 +591,48 @@ def add_hbond_donors(mol_code, session=component_session):
     comp_entry.hbond_donors_added = True
     return hbond_entries
 
+def add_chbond_donors(mol_code,session=component_session):
+    """Populate the chbond donor table for a given component
+    Notes
+    -----
+    This must be run for new components to allow CH-bonds to be found for that component.
+
+    Parameters
+    ----------
+    mol_code: str
+        Three-letter code for a component.
+    session : sqlalchemy.orm.session.Session
+        SQLAlchemy session connecting to components database
+
+    Returns
+    -------
+    chbond_entries : list
+        List of CH-bond entries for that component
+    """
+
+    chbond_entries = []
+    chbond_heteroatoms = ('C')
+    comp_entry = session.query(ComponentTable).filter(ComponentTable.code==mol_code).one_or_none()
+    if not comp_entry:
+        (comp_entry, new_component), all_atoms, ll_bonds = add_component(mol_code,session=session)
+        session.commit()
+        if not comp_entry:
+            print ("{0} not a known component.".format(mol_code))
+            return chbond_entries
+    donor_chbonds = component_covalent_bonds(mol_code,'H',chbond_heteroatoms)
+    for bond in donor_chbonds:
+        proton_entry = session.query(AtomTable).filter(AtomTable.component_id == comp_entry.id).\
+            filter(AtomTable.atom_label==bond).one()
+        heteroatom_entry = session.query(AtomTable).filter(AtomTable.component_id == comp_entry.id).\
+            filter(AtomTable.atom_label==donor_chbonds[bond][0]).one()
+        chbond_dict={'component_id' : comp_entry.id,
+                     'proton_id' : proton_entry.id,
+                     'heteroatom_id' : heteroatom_entry.id}
+
+        chbond_donor_entry, new_chbond_donor = get_or_create(CHBondDonorTable, session=session, **chbond_dict)
+        chbond_entries.append(chbond_donor_entry)
+    comp_entry.chbond_donors_added = True
+    return chbond_entries
 
 def get_hbond_donors(mol_code, session=component_session):
     """ Retrieve or populate and return the H-bond donors for a component."""
@@ -591,6 +650,23 @@ def get_hbond_donors(mol_code, session=component_session):
         donors = comp_entry.hbond_donors
     return {x.proton.atom_label: x.heteroatom.atom_label for x in donors}
 
+def get_chbond_donors(mol_code, session=component_session):
+    """Retrieve or populate and return CH-bond donors for a component."""
+    comp_entry = session.query(ComponentTable).filter(ComponentTable.code == mol_code).one_or_none()
+    if not comp_entry:
+        (comp_entry, new_component), all_atoms, all_bonds = add_component(mol_code, session=session)
+        session.commit()
+        if not comp_entry:
+            print("{0} not a known component.".format(mol_code))
+            return{}
+    if not bool(comp_entry.chbond_donors_added):
+        print ("Finding CH-bond donors for new component {0}.".format(mol_code))
+        donors = add_chbond_donors(mol_code,session=session)
+    else:
+        donors = comp_entry.chbond_donors
+
+    return{x.proton.atom_label: x.heteroatom.atom_label for x in donors}
+
 
 def hbond_donor_dict(mol_codes=[], session=component_session):
     """ Return the H-bond donors for all components in the database."""
@@ -600,6 +676,13 @@ def hbond_donor_dict(mol_codes=[], session=component_session):
     session.commit()
     return donor_dict
 
+def chbond_donor_dict(mol_codes=[],session=component_session):
+    """ Return CH-bond donors for all components in the database """
+    if not mol_codes:
+        mol_codes = [x for y in session.query(ComponentTable.code).all() for x in y]
+    donor_dict = {x: get_chbond_donors(x) for x in mol_codes}
+    session.commit()
+    return donor_dict
 
 def add_hbond_acceptors(mol_code, session=component_session):
     """ Populate the hbond_acceptor table for a given component.
@@ -697,6 +780,10 @@ def get_hbond_dicts(mol_codes=None, session=component_session):
     donor_dict = hbond_donor_dict(mol_codes=mol_codes, session=session)
     acceptor_dict = hbond_acceptor_dict(mol_codes=mol_codes, session=session)
     return donor_dict, acceptor_dict
+
+def get_chbond_dict(mol_codes=None, session=component_session):
+    donor_dict = chbond_donor_dict(mol_codes=mol_codes,session=session)
+    return donor_dict
 
 
 def atomic_mass(symbol, session=component_session):

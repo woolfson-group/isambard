@@ -3,7 +3,7 @@ import networkx
 
 from ampal.ampal_databases import element_data
 from tools.components import ch_bond_dict, component_pi_systems, get_hbond_dicts, get_hbond_acceptors,\
-    get_hbond_donors, known_pi_systems
+    get_hbond_donors, known_pi_systems, get_chbond_donors, get_chbond_dict
 from tools.geometry import distance, angle_between_vectors, find_foot_on_plane, centre_of_mass, gen_sectors,\
     dihedral
 
@@ -11,6 +11,7 @@ core_components = ['ALA', 'ARG', 'ASN', 'ASP', 'CYS', 'GLN', 'GLU', 'GLY', 'HIS'
                    'PRO', 'SER', 'THR', 'TRP', 'TYR', 'VAL', 'HOH']
 
 hbond_donors, hbond_acceptors = get_hbond_dicts(mol_codes=core_components)
+chbond_donors = get_chbond_dict(mol_codes=core_components)
 ch_bonds = ch_bond_dict(mol_codes=core_components)
 all_pi_systems = known_pi_systems()
 npi_dict = {'ASN' : ['OD1'], 'ASP' : ['OD1','OD2'], 'GLU' : ['OE1','OE2'], 'GLN' : ['OE1']}
@@ -103,9 +104,21 @@ class HydrogenBond(NonCovalentInteraction):
         return '<Hydrogen Bond between ({}{}) {}-{} ||||| {}-{} ({}{})>'.format(
             dm.id, dc.id, dm.mol_code, self.donor.res_label, self.acceptor.res_label, am.mol_code, am.id, ac.id)
 
+
+class CHydrogenBond(HydrogenBond):
+    def __init__(self,donor,acceptor,dist,ang_d,ang_a):
+        super().__init__(donor,acceptor,dist,ang_d,ang_a)
+
+    def __repr__(self):
+        dm = self.donor.ampal_parent
+        dc = dm.ampal_parent
+        am = self.acceptor.ampal_parent
+        ac = am.ampal_parent
+        return '<C-Hydrogen Bond between ({}{}) {}-{} ||||| {}-{} ({}{})>'.format(
+            dm.id, dc.id, dm.mol_code, self.donor.res_label, self.acceptor.res_label, am.mol_code, am.id, ac.id)
+
 class NPiStarInteraction(object):
     """Defines an n-->pi* interaction in terms of a donor and acceptor CARBONYL BONDS."""
-
     def __init__(self, carbonyl_donor, carbonyl_acceptor):
         self.carbonyl_donor=carbonyl_donor
         self.carbonyl_acceptor=carbonyl_acceptor
@@ -512,7 +525,70 @@ def hydrogen_bonds(atoms, dist_range=(1.5, 2.7), angular_cutoff=90.0, water_dono
             hbonds.append(hbond)
     return hbonds
 
+def C_hydrogen_bonds(atoms, dist_range=(1.5, 2.7), angular_cutoff=90.0):
+    """Returns a list of C_hydrogen bonds found in the input structure.
 
+    Parameters
+    ----------
+    atoms: [Atom]
+        Atoms to be analysed.
+    dist_range: (float, float)
+        Minimum and maximum distance for interaction.
+    angular_cutoff: float
+        Minimum interaction angle.
+    water_donors : False:
+        True to include waters as donors if water protons are missing, e.g. for crystal structures but not models.
+
+    Returns
+    -------
+    chbonds: [HydrogenBonds]
+        A list of the chydrogen bonds found in the ampal object.
+    """
+    donors = []
+    acceptors = []
+    donor_waters = []
+    for atom in atoms:
+        component = atom.ampal_parent.mol_code
+        if component not in chbond_donors:
+            chbond_donors[component] = get_chbond_donors(component)
+            hbond_acceptors[component] = get_hbond_acceptors(component)
+        if atom.res_label in chbond_donors[component]:
+            donors.append(atom)
+        elif atom.res_label in hbond_acceptors[component]:
+            acceptors.append(atom)
+        if component == 'HOH' and atom.res_label == 'O':
+            donor_waters.append(atom)
+    potential_chbonds = []
+    for d in donors:
+        for a in acceptors:
+            dist = distance(d._vector, a._vector)
+            if dist_range[0] < dist < dist_range[1]:
+                potential_chbonds.append(((d, a), dist))
+    chbonds = []
+    for ((da, aa), dist) in potential_chbonds:
+        da_mc = da.ampal_parent.mol_code
+        aa_mc = aa.ampal_parent.mol_code
+        bv = aa._vector - da._vector  # hbond vector
+        #  Donor and hydrogen
+
+        dv = da.ampal_parent.atoms[chbond_donors[da_mc][da.res_label]]._vector - da._vector
+        dba = angle_between_vectors(dv, bv)
+        if dba < angular_cutoff:
+            continue
+        # Acceptor and acceptor-antecedent
+        baa = None
+        fail = False
+        for aaa in hbond_acceptors[aa_mc][aa.res_label]:
+            if aaa not in aa.ampal_parent.atoms:
+                continue
+            av = aa.ampal_parent.atoms[aaa]._vector - aa._vector
+            baa = angle_between_vectors(-bv, av)
+            if baa < angular_cutoff:
+                fail = True
+        if not fail:
+            chbond = CHydrogenBond(da, aa, dist, dba, baa)
+            chbonds.append(chbond)
+    return chbonds
 # This should be expanded to a dictionary with values for each hbond pair
 # check figure 1 in Gail's latest ProSci paper
 def find_hydrogen_bonds(ampal, dist_range=(1.5, 2.7), angular_cutoff=90.0, water_donors=True):
@@ -538,6 +614,28 @@ def find_hydrogen_bonds(ampal, dist_range=(1.5, 2.7), angular_cutoff=90.0, water
         hbonds.extend(hydrogen_bonds(sector, dist_range, angular_cutoff, water_donors=water_donors))
     return list(set(hbonds))
 
+def find_C_hydrogen_bonds(ampal, dist_range=(1.5, 2.7), angular_cutoff=90.0):
+    """Returns a list of hydrogen bonds found in the input structure involving the 20 proteinogenic amino acids.
+
+    Parameters
+    ----------
+    ampal: BaseAmpal or subclass
+        AMPAL object to be analysed.
+    dist_range: (float, float)
+        Minimum and maximum distance for interaction.
+    angular_cutoff: float
+        Minimum interaction angle.
+
+    Returns
+    -------
+    hbonds: [HydrogenBonds]
+        A list of the hydrogen bonds found in the ampal object.
+    """
+    sectors = gen_sectors(ampal.get_atoms(), dist_range[1] * 1.1)
+    chbonds = []
+    for sector in sectors.values():
+        chbonds.extend(C_hydrogen_bonds(sector, dist_range, angular_cutoff))
+    return list(set(chbonds))
 
 def find_CH_pi_interactions(monomer, acceptor_codes=None, dist_cutoff=3.5, angle_cutoff=55, proj_cutoff=2,
                             inter_chain=True):
