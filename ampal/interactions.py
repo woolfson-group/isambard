@@ -733,6 +733,20 @@ def find_CH_pis_in_list(monomer_list, donor_codes=None, donor_categories=None, a
     return all_interactions
 
 
+def find_carbonyls(ampal):
+
+    cvs = find_covalent_bonds(ampal)
+    carbonyls = []
+
+    for cv in cvs:
+        if cv.a.res_label == "C" and cv.b.res_label == "O":
+            carbonyls.append(cv)
+        elif cv.a.res_label == "CG" and cv.b.res_label == "OD1" or cv.b.res_label == "OD2":
+            carbonyls.append(cv)
+        elif cv.a.res_label == "CD" and cv.b.res_label == "OE1" or cv.b.res_label == "OE2":
+            carbonyls.append(cv)
+    return carbonyls
+
 def find_N_pis(polymer,dist_cutoff=3.22,angle_max=125,angle_min=95,dihedral_min=120):
     """Finds n-->pi* interactions for all backbone carbonyls in a chain that fit the specified parameters
 
@@ -758,6 +772,26 @@ def find_N_pis(polymer,dist_cutoff=3.22,angle_max=125,angle_min=95,dihedral_min=
 
     """
     interactions = []
+
+    poss_interactions = []
+
+    carbonyls = find_carbonyls(polymer)
+    for i in range(0,len(carbonyls-1)):
+        for j in range(1,len(carbonyls)):
+            npistar = NPiStarInteraction(carbonyls[i],carbonyls[j])
+            poss_interactions.append(npistar)
+            npistar2 = NPiStarInteraction(carbonyls[j],carbonyls[i])
+            poss_interactions.append(npistar)
+
+    for int in poss_interactions:
+
+        if int.distance < 3.22 and int.angle > 95 and int.angle < 125 and int.carbonyl_dihedral > 120:
+
+            interactions.append(int)
+
+    return interactions
+
+
 
     for i in range(0,len(polymer)-1):
 
