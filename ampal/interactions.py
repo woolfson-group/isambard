@@ -103,6 +103,86 @@ class HydrogenBond(NonCovalentInteraction):
         return '<Hydrogen Bond between ({}{}) {}-{} ||||| {}-{} ({}{})>'.format(
             dm.id, dc.id, dm.mol_code, self.donor.res_label, self.acceptor.res_label, am.mol_code, am.id, ac.id)
 
+class NPiStarInteraction(NonCovalentInteraction):
+    """Defines an n-->pi* interaction in terms of a donor and acceptor CARBONYL BONDS. Currently only works on
+    backbone n-pi* interactions."""
+
+    def __init__(self, carbonyl_donor, carbonyl_acceptor, dist, ang, dihedral):
+        super(NPiStarInteraction,self).__init__(carbonyl_donor,carbonyl_acceptor,dist)
+        self.ang = ang
+        self.dihedral = dihedral
+
+    def __repr__(self):
+        c1 = self.carbonyl_donor.a
+        o1 = self.carbonyl_donor.b
+        c2 = self.carbonyl_acceptor.a
+        o2 = self.carbonyl_acceptor.b
+
+        return '<n-->pi* interaction between ({}-{}) {} ||||| {} ({}-{})>'.format(
+                c1.ampal_parent.mol_code, c1.ampal_parent.id, o1.res_label, c2.ampal_parent.res_label, c2.ampal_parent.mol_code, c2.res_label)
+    @property
+    def distance(self):
+        """ Distance between donor O atom and acceptor C atom"""
+        return distance(self.o1, self.c2)
+
+    @property
+    def angle(self):
+        """Angle between the O-C n->pi* bond and the acceptor C=O bond"""
+
+        oc_vector = o2._vector - c2._vector
+        return angle_between_vectors(o1,oc_vector)
+
+    @property
+    def carbonyl_dihedral(self):
+
+        aaa = None
+
+        if self.c1.res_label == "C":
+            aaa = self.c1.ampal_parent['CA']
+        elif self.c1.res_label == "CG":
+            aaa = self.c1.ampal_parent['CB']
+        elif self.c1.res_label == "CD":
+            aaa = self.c1.ampal_parent['CG']
+
+        return dihedral(aaa,c1,o1,c2)
+
+    def parameters(self, dist_cutoff=3.22, angle_min=95, angle_max=125, dihedral_min=120):
+        """ Returns all N-pi* measurements, and whether these consistute a N-pi* interaction with defined parameters.
+
+        Parameters
+        ----------
+        dist_cutoff : float
+            Maximum distance between donor oxygen and acceptor carbonyl
+        angle_min : float
+            Minimum angle between O-C n-pi* interaction and acceptor C=O bond.
+        angle_max : float
+            Maximum angle between O-C n-pi* interaction and acceptor C=O bond.
+        dihedral_min : float
+            Minimum dihedral angle for CA-C-O-C (position of pi cloud).
+
+        Returns
+        -------
+        answer : bool
+            Whether it constitutes a CH-pi intetaction.
+        measurements : dict
+            Calculated measurements.
+        """
+        if self.distance is None or self.distance > dist_cutoff:
+            return False, {'distance': self.distance,
+                           'angle': 'Not calculated',
+                           'dihedral': 'Not calculated'}
+        if self.angle is None or self.angle < angle_min or self.angle > angle_max:
+            return False, {'distance': self.distance,
+                           'angle': self.angle,
+                           'dihedral': 'Not calculated'}
+        if self.carbonyl_dihedral is None or abs(self.carbonyl_dihedral) < dihedral_min:
+            return False, {'distance': self.distance,
+                           'angle': self.angle,
+                           'dihedral': self.carbonyl_dihedral}
+        return True, {'distance': self.distance,
+                      'angle': self.angle,
+                      'dihedral': self.carbonyl_dihedral}
+
 class SaltBridge(NonCovalentInteraction):
     """Defines a salt bridge in terms of a negative and positive atom"""
 
@@ -144,85 +224,6 @@ class PiBase(object):
     @property
     def acceptor_monomer(self):
         return self.acceptor
-
-
-class NPiStarInteraction(PiBase):
-    """Defines an n-->pi* interaction in terms of a donor and acceptor. Currently only works on
-    backbone n-pi* interactions."""
-
-    def __init__(self, donor, acceptor):
-        super(NPiStarInteraction,self).__init__(donor,acceptor)
-
-    def __repr__(self):
-        dm = self.donor
-        am = self.acceptor
-
-        return '<n-->pi* interaction between ({}-{}) {} ||||| {} ({}{})>'.format(
-                dm.id,dm.mol_code,dm['O'].res_label,am['C'].res_label,am.mol_code,am.id)
-
-    @property
-    def distance(self):
-        """ Distance between donor O atom and acceptor C atom"""
-        if self.donor['O'] and self.acceptor['C']:
-            return distance(self.donor['O'], self.acceptor['C'])
-        else:
-            return None
-
-    @property
-    def angle(self):
-        """Angle between the O-C n->pi* bond and the acceptor C=O bond"""
-
-        if self.donor['O'] and self.acceptor['C'] and self.acceptor['O']:
-            oc_vector = self.donor['O'].array - self.acceptor['C'].array
-            acc_CO_vector = self.acceptor['O'].array - self.acceptor['C'].array
-            return angle_between_vectors(oc_vector,acc_CO_vector)
-        else:
-            return None
-    @property
-    def carbonyl_dihedral(self):
-
-        if self.donor['CA'] and self.donor['C'] and self.donor['O'] and self.acceptor['C']:
-
-            return dihedral(self.donor['CA'],self.donor['C'],self.donor['O'],self.acceptor['C'])
-        else:
-            return None
-
-    def parameters(self, dist_cutoff=3.22, angle_min=95, angle_max=125, dihedral_min=120):
-        """ Returns all N-pi* measurements, and whether these consistute a N-pi* interaction with defined parameters.
-
-        Parameters
-        ----------
-        dist_cutoff : float
-            Maximum distance between donor oxygen and acceptor carbonyl
-        angle_min : float
-            Minimum angle between O-C n-pi* interaction and acceptor C=O bond.
-        angle_max : float
-            Maximum angle between O-C n-pi* interaction and acceptor C=O bond.
-        dihedral_min : float
-            Minimum dihedral angle for CA-C-O-C (position of pi cloud).
-
-        Returns
-        -------
-        answer : bool
-            Whether it constitutes a CH-pi intetaction.
-        measurements : dict
-            Calculated measurements.
-        """
-        if self.distance is None or self.distance > dist_cutoff:
-            return False, {'distance': self.distance,
-                           'angle': 'Not calculated',
-                           'dihedral': 'Not calculated'}
-        if self.angle is None or self.angle < angle_min or self.angle > angle_max:
-            return False, {'distance': self.distance,
-                           'angle': self.angle,
-                           'dihedral': 'Not calculated'}
-        if self.carbonyl_dihedral is None or abs(self.carbonyl_dihedral) < dihedral_min:
-            return False, {'distance': self.distance,
-                           'angle': self.angle,
-                           'dihedral': self.carbonyl_dihedral}
-        return True, {'distance': self.distance,
-                      'angle': self.angle,
-                      'dihedral': self.carbonyl_dihedral}
 
 
 class CH_pi(PiBase):
