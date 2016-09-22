@@ -103,7 +103,7 @@ class HydrogenBond(NonCovalentInteraction):
         return '<Hydrogen Bond between ({}{}) {}-{} ||||| {}-{} ({}{})>'.format(
             dm.id, dc.id, dm.mol_code, self.donor.res_label, self.acceptor.res_label, am.mol_code, am.id, ac.id)
 
-class NPiStarInteraction(PiBase):
+class NPiStarInteraction(object):
     """Defines an n-->pi* interaction in terms of a donor and acceptor CARBONYL BONDS. Currently only works on
     backbone n-pi* interactions."""
 
