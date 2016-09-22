@@ -107,8 +107,8 @@ class NPiStarInteraction(NonCovalentInteraction):
     """Defines an n-->pi* interaction in terms of a donor and acceptor CARBONYL BONDS. Currently only works on
     backbone n-pi* interactions."""
 
-    def __init__(self, carbonyl_donor, carbonyl_acceptor, dist, ang, dihedral):
-        super(NPiStarInteraction,self).__init__(carbonyl_donor,carbonyl_acceptor,dist)
+    def __init__(self, carbonyl_donor, carbonyl_acceptor):
+        super(NPiStarInteraction,self).__init__(carbonyl_donor,carbonyl_acceptor)
         self.ang = ang
         self.dihedral = dihedral
 
@@ -789,19 +789,6 @@ def find_N_pis(polymer,dist_cutoff=3.22,angle_max=125,angle_min=95,dihedral_min=
         if int.distance < 3.22 and int.angle > 95 and int.angle < 125 and int.carbonyl_dihedral > 120:
 
             interactions.append(int)
-
-    return interactions
-
-
-
-    for i in range(0,len(polymer)-1):
-
-        d = polymer[i]
-        a = polymer[i+1]
-
-        n_pistar = NPiStarInteraction(d,a)
-        if n_pistar.parameters()[0]:
-            interactions.append(n_pistar)
 
     return interactions
 
