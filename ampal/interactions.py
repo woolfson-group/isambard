@@ -110,6 +110,10 @@ class NPiStarInteraction(object):
     def __init__(self, carbonyl_donor, carbonyl_acceptor):
         self.carbonyl_donor=carbonyl_donor
         self.carbonyl_acceptor=carbonyl_acceptor
+        self.c1 = self.carbonyl_donor.a
+        self.o1 = self.carbonyl_donor.b
+        self.c2 = self.carbonyl_acceptor.a
+        self.o2 = self.carbonyl_acceptor.b
 
     def __repr__(self):
         c1 = self.carbonyl_donor.a
@@ -128,8 +132,8 @@ class NPiStarInteraction(object):
     def angle(self):
         """Angle between the O-C n->pi* bond and the acceptor C=O bond"""
 
-        oc_vector = o2._vector - c2._vector
-        return angle_between_vectors(o1,oc_vector)
+        oc_vector = self.o2._vector - self.c2._vector
+        return angle_between_vectors(self.o1,oc_vector)
 
     @property
     def carbonyl_dihedral(self):
@@ -143,7 +147,7 @@ class NPiStarInteraction(object):
         elif self.c1.res_label == "CD":
             aaa = self.c1.ampal_parent['CG']
 
-        return dihedral(aaa,c1,o1,c2)
+        return dihedral(aaa,self.c1,self.o1,self.c2)
 
     def parameters(self, dist_cutoff=3.22, angle_min=95, angle_max=125, dihedral_min=120):
         """ Returns all N-pi* measurements, and whether these consistute a N-pi* interaction with defined parameters.
