@@ -752,7 +752,7 @@ def find_carbonyls(ampal):
 def find_N_pis(polymer,dist_cutoff=3.22,angle_max=125,angle_min=95,dihedral_min=120):
     """Finds n-->pi* interactions for all backbone carbonyls in a chain that fit the specified parameters
     Will not currently find n->pi* within residues (e.g. Glu OE1 to Glu C=O)
-
+    
     Parameters
     ----------
     polymer : Polymer
