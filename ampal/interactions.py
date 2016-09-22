@@ -122,7 +122,7 @@ class NPiStarInteraction(object):
         o2 = self.carbonyl_acceptor.b
 
         return '<n-->pi* interaction between ({}-{}) {} ||||| {} ({}-{})>'.format(
-                c1.ampal_parent.mol_code, c1.ampal_parent.id, o1.res_label, c2.res_label, c2.ampal_parent.mol_code, c2.res_label)
+                c1.ampal_parent.mol_code, c1.ampal_parent.id, o1.res_label, c2.res_label, c2.ampal_parent.mol_code, c2.ampal_parent.id)
     @property
     def distance(self):
         """ Distance between donor O atom and acceptor C atom"""
