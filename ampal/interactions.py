@@ -107,7 +107,7 @@ class NPiStarInteraction(NonCovalentInteraction):
     """Defines an n-->pi* interaction in terms of a donor and acceptor CARBONYL BONDS. Currently only works on
     backbone n-pi* interactions."""
 
-    def __init__(self, carbonyl_donor, carbonyl_acceptor):
+    def __init__(self, carbonyl_donor, carbonyl_acceptor,dist):
         super(NPiStarInteraction,self).__init__(carbonyl_donor,carbonyl_acceptor)
         self.ang = ang
         self.dihedral = dihedral
