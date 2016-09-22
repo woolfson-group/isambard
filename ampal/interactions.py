@@ -789,7 +789,7 @@ def find_N_pis(polymer,dist_cutoff=3.22,angle_max=125,angle_min=95,dihedral_min=
 
     for int in poss_interactions:
 
-        if int.distance < 3.22 and int.angle > 95 and int.angle < 125 and int.carbonyl_dihedral > 120:
+        if int.distance < 3.22 and int.angle > 95 and int.angle < 125 and abs(int.carbonyl_dihedral) > 120:
 
             interactions.append(int)
 
