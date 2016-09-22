@@ -776,7 +776,7 @@ def find_N_pis(polymer,dist_cutoff=3.22,angle_max=125,angle_min=95,dihedral_min=
     poss_interactions = []
 
     carbonyls = find_carbonyls(polymer)
-    for i in range(0,len(carbonyls-1)):
+    for i in range(0,len(carbonyls) - 1):
         for j in range(1,len(carbonyls)):
             npistar = NPiStarInteraction(carbonyls[i],carbonyls[j])
             poss_interactions.append(npistar)
