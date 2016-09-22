@@ -13,6 +13,7 @@ core_components = ['ALA', 'ARG', 'ASN', 'ASP', 'CYS', 'GLN', 'GLU', 'GLY', 'HIS'
 hbond_donors, hbond_acceptors = get_hbond_dicts(mol_codes=core_components)
 ch_bonds = ch_bond_dict(mol_codes=core_components)
 all_pi_systems = known_pi_systems()
+npi_dict = {'ASN' : ['OD1'], 'ASP' : ['OD1','OD2'], 'GLU' : ['OE1','OE2'], 'GLN' : ['OE1']}
 
 
 class Interaction(object):
@@ -102,6 +103,88 @@ class HydrogenBond(NonCovalentInteraction):
         return '<Hydrogen Bond between ({}{}) {}-{} ||||| {}-{} ({}{})>'.format(
             dm.id, dc.id, dm.mol_code, self.donor.res_label, self.acceptor.res_label, am.mol_code, am.id, ac.id)
 
+class NPiStarInteraction(object):
+    """Defines an n-->pi* interaction in terms of a donor and acceptor CARBONYL BONDS."""
+
+    def __init__(self, carbonyl_donor, carbonyl_acceptor):
+        self.carbonyl_donor=carbonyl_donor
+        self.carbonyl_acceptor=carbonyl_acceptor
+        self.c1 = self.carbonyl_donor.a
+        self.o1 = self.carbonyl_donor.b
+        self.c2 = self.carbonyl_acceptor.a
+        self.o2 = self.carbonyl_acceptor.b
+
+    def __repr__(self):
+        c1 = self.carbonyl_donor.a
+        o1 = self.carbonyl_donor.b
+        c2 = self.carbonyl_acceptor.a
+        o2 = self.carbonyl_acceptor.b
+
+        return '<n-->pi* interaction between ({}-{}) {} ||||| {} ({}-{})>'.format(
+                c1.ampal_parent.mol_code, c1.ampal_parent.id, o1.res_label, c2.res_label, c2.ampal_parent.mol_code, c2.ampal_parent.id)
+    @property
+    def distance(self):
+        """ Distance between donor O atom and acceptor C atom"""
+        return distance(self.o1, self.c2)
+
+    @property
+    def angle(self):
+        """Angle between the O-C n->pi* bond and the acceptor C=O bond"""
+
+        oc_vector = self.o2._vector - self.c2._vector
+        return angle_between_vectors(self.o1,oc_vector)
+
+    @property
+    def carbonyl_dihedral(self):
+
+        aaa = None
+
+        if self.c1.res_label == "C":
+            aaa = self.c1.ampal_parent['CA']
+        elif self.c1.res_label == "CG":
+            aaa = self.c1.ampal_parent['CB']
+        elif self.c1.res_label == "CD":
+            aaa = self.c1.ampal_parent['CG']
+
+        return dihedral(aaa,self.c1,self.o1,self.c2)
+
+    def parameters(self, dist_cutoff=3.22, angle_min=95, angle_max=125, dihedral_min=120):
+        """ Returns all N-pi* measurements, and whether these consistute a N-pi* interaction with defined parameters.
+
+        Parameters
+        ----------
+        dist_cutoff : float
+            Maximum distance between donor oxygen and acceptor carbonyl
+        angle_min : float
+            Minimum angle between O-C n-pi* interaction and acceptor C=O bond.
+        angle_max : float
+            Maximum angle between O-C n-pi* interaction and acceptor C=O bond.
+        dihedral_min : float
+            Minimum dihedral angle for CA-C-O-C (position of pi cloud).
+
+        Returns
+        -------
+        answer : bool
+            Whether it constitutes a CH-pi intetaction.
+        measurements : dict
+            Calculated measurements.
+        """
+        if self.distance is None or self.distance > dist_cutoff:
+            return False, {'distance': self.distance,
+                           'angle': 'Not calculated',
+                           'dihedral': 'Not calculated'}
+        if self.angle is None or self.angle < angle_min or self.angle > angle_max:
+            return False, {'distance': self.distance,
+                           'angle': self.angle,
+                           'dihedral': 'Not calculated'}
+        if self.carbonyl_dihedral is None or abs(self.carbonyl_dihedral) < dihedral_min:
+            return False, {'distance': self.distance,
+                           'angle': self.angle,
+                           'dihedral': self.carbonyl_dihedral}
+        return True, {'distance': self.distance,
+                      'angle': self.angle,
+                      'dihedral': self.carbonyl_dihedral}
+
 class SaltBridge(NonCovalentInteraction):
     """Defines a salt bridge in terms of a negative and positive atom"""
 
@@ -143,85 +226,6 @@ class PiBase(object):
     @property
     def acceptor_monomer(self):
         return self.acceptor
-
-
-class NPiStarInteraction(PiBase):
-    """Defines an n-->pi* interaction in terms of a donor and acceptor. Currently only works on
-    backbone n-pi* interactions."""
-
-    def __init__(self, donor, acceptor):
-        super(NPiStarInteraction,self).__init__(donor,acceptor)
-
-    def __repr__(self):
-        dm = self.donor
-        am = self.acceptor
-
-        return '<n-->pi* interaction between ({}-{}) {} ||||| {} ({}{})>'.format(
-                dm.id,dm.mol_code,dm['O'].res_label,am['C'].res_label,am.mol_code,am.id)
-
-    @property
-    def distance(self):
-        """ Distance between donor O atom and acceptor C atom"""
-        if self.donor['O'] and self.acceptor['C']:
-            return distance(self.donor['O'], self.acceptor['C'])
-        else:
-            return None
-
-    @property
-    def angle(self):
-        """Angle between the O-C n->pi* bond and the acceptor C=O bond"""
-
-        if self.donor['O'] and self.acceptor['C'] and self.acceptor['O']:
-            oc_vector = self.donor['O'].array - self.acceptor['C'].array
-            acc_CO_vector = self.acceptor['O'].array - self.acceptor['C'].array
-            return angle_between_vectors(oc_vector,acc_CO_vector)
-        else:
-            return None
-    @property
-    def carbonyl_dihedral(self):
-
-        if self.donor['CA'] and self.donor['C'] and self.donor['O'] and self.acceptor['C']:
-
-            return dihedral(self.donor['CA'],self.donor['C'],self.donor['O'],self.acceptor['C'])
-        else:
-            return None
-
-    def parameters(self, dist_cutoff=3.22, angle_min=95, angle_max=125, dihedral_min=120):
-        """ Returns all N-pi* measurements, and whether these consistute a N-pi* interaction with defined parameters.
-
-        Parameters
-        ----------
-        dist_cutoff : float
-            Maximum distance between donor oxygen and acceptor carbonyl
-        angle_min : float
-            Minimum angle between O-C n-pi* interaction and acceptor C=O bond.
-        angle_max : float
-            Maximum angle between O-C n-pi* interaction and acceptor C=O bond.
-        dihedral_min : float
-            Minimum dihedral angle for CA-C-O-C (position of pi cloud).
-
-        Returns
-        -------
-        answer : bool
-            Whether it constitutes a CH-pi intetaction.
-        measurements : dict
-            Calculated measurements.
-        """
-        if self.distance is None or self.distance > dist_cutoff:
-            return False, {'distance': self.distance,
-                           'angle': 'Not calculated',
-                           'dihedral': 'Not calculated'}
-        if self.angle is None or self.angle < angle_min or self.angle > angle_max:
-            return False, {'distance': self.distance,
-                           'angle': self.angle,
-                           'dihedral': 'Not calculated'}
-        if self.carbonyl_dihedral is None or abs(self.carbonyl_dihedral) < dihedral_min:
-            return False, {'distance': self.distance,
-                           'angle': self.angle,
-                           'dihedral': self.carbonyl_dihedral}
-        return True, {'distance': self.distance,
-                      'angle': self.angle,
-                      'dihedral': self.carbonyl_dihedral}
 
 
 class CH_pi(PiBase):
@@ -731,8 +735,34 @@ def find_CH_pis_in_list(monomer_list, donor_codes=None, donor_categories=None, a
     return all_interactions
 
 
+def find_carbonyls(ampal):
+    """Find all carbonyl bonds in an ampal object and return them
+    Parameters
+    ----------
+    ampal : AMPAL object
+
+    Returns
+    -------
+    carbonyls : list
+        list of CovalentBond objects
+
+    """
+
+    cvs = find_covalent_bonds(ampal)
+    carbonyls = []
+
+    for cv in cvs:
+        if cv.a.res_label == "C" and cv.b.res_label == "O":
+            carbonyls.append(cv)
+        elif cv.a.res_label == "CG" and cv.b.res_label == "OD1" or cv.b.res_label == "OD2":
+            carbonyls.append(cv)
+        elif cv.a.res_label == "CD" and cv.b.res_label == "OE1" or cv.b.res_label == "OE2":
+            carbonyls.append(cv)
+    return carbonyls
+
 def find_N_pis(polymer,dist_cutoff=3.22,angle_max=125,angle_min=95,dihedral_min=120):
     """Finds n-->pi* interactions for all backbone carbonyls in a chain that fit the specified parameters
+    Will not currently find n->pi* within residues (e.g. Glu OE1 to Glu C=O)
 
     Parameters
     ----------
@@ -757,14 +787,22 @@ def find_N_pis(polymer,dist_cutoff=3.22,angle_max=125,angle_min=95,dihedral_min=
     """
     interactions = []
 
-    for i in range(0,len(polymer)-1):
+    poss_interactions = []
 
-        d = polymer[i]
-        a = polymer[i+1]
+    carbonyls = find_carbonyls(polymer)
+    for i in range(0,len(carbonyls) - 1):
+        for j in range(i+1,len(carbonyls)):
+            if carbonyls[i].a.ampal_parent.id != carbonyls[j].a.ampal_parent.id:
+                npistar = NPiStarInteraction(carbonyls[i],carbonyls[j])
+                poss_interactions.append(npistar)
+                npistar2 = NPiStarInteraction(carbonyls[j],carbonyls[i])
+                poss_interactions.append(npistar2)
 
-        n_pistar = NPiStarInteraction(d,a)
-        if n_pistar.parameters()[0]:
-            interactions.append(n_pistar)
+    for int in poss_interactions:
+
+        if int.distance <= dist_cutoff and int.angle >= angle_min and int.angle <= angle_max and abs(int.carbonyl_dihedral) >= dihedral_min:
+
+            interactions.append(int)
 
     return interactions
 
