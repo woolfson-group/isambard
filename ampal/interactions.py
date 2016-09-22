@@ -104,8 +104,7 @@ class HydrogenBond(NonCovalentInteraction):
             dm.id, dc.id, dm.mol_code, self.donor.res_label, self.acceptor.res_label, am.mol_code, am.id, ac.id)
 
 class NPiStarInteraction(object):
-    """Defines an n-->pi* interaction in terms of a donor and acceptor CARBONYL BONDS. Currently only works on
-    backbone n-pi* interactions."""
+    """Defines an n-->pi* interaction in terms of a donor and acceptor CARBONYL BONDS."""
 
     def __init__(self, carbonyl_donor, carbonyl_acceptor):
         self.carbonyl_donor=carbonyl_donor
@@ -789,7 +788,7 @@ def find_N_pis(polymer,dist_cutoff=3.22,angle_max=125,angle_min=95,dihedral_min=
 
     for int in poss_interactions:
 
-        if int.distance < 3.22 and int.angle > 95 and int.angle < 125 and abs(int.carbonyl_dihedral) > 120:
+        if int.distance <= dist_cutoff and int.angle >= angle_min and int.angle <= angle_max and abs(int.carbonyl_dihedral) >= dihedral_min:
 
             interactions.append(int)
 
