@@ -13,6 +13,7 @@ core_components = ['ALA', 'ARG', 'ASN', 'ASP', 'CYS', 'GLN', 'GLU', 'GLY', 'HIS'
 hbond_donors, hbond_acceptors = get_hbond_dicts(mol_codes=core_components)
 ch_bonds = ch_bond_dict(mol_codes=core_components)
 all_pi_systems = known_pi_systems()
+npi_dict = {'ASN' : ['OD1'], 'ASP' : ['OD1','OD2'], 'GLU' : ['OE1','OE2'], 'GLN' : ['OE1']}
 
 
 class Interaction(object):
