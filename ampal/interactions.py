@@ -242,9 +242,9 @@ class PiBase(object):
 
 class Met_pi(PiBase):
 
-    def __init__(self, donor, donor_atoms, acceptor, pi_system=None):
+    def __init__(self, donor, donor_atom, acceptor, pi_system=None):
         super(Met_pi, self).__init__(donor,acceptor)
-        self.s = donor_atoms['S']
+        self.s = donor_atom
 
         if pi_system:
             self.pi_system=pi_system
