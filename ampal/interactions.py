@@ -251,10 +251,11 @@ class Met_pi(PiBase):
         elif self.acceptor_monomer.mol_code not in all_pi_systems:
             raise AttributeError("{0} has no defined pi systems - it cannot act as an acceptor.".\
                                  format(self.acceptor_monomer.mol_code))
-        elif len(all_pi_systems.[self.acceptor_monomer.mol_code]) > 1:
-            raise NameError("{0} has multiple pi systems - pi system argument must be defined from {1}.".\
-                            format(self.acceptor_monomer.mol_code, all_pi_systems[self.acceptor_monomer.mol_code].keys()))
-        else:
+        elif len(all_pi_systems[self.acceptor_monomer.mol_code]) > 1:
+            raise NameError("{0} has multiple pi systems - pi_system argument must be defined from {1}.". \
+                            format(self.acceptor_monomer.mol_code,
+                                   all_pi_systems[self.acceptor_monomer.mol_code].keys()))
+        else:else:
             self.pi_system = list(all_pi_systems[self.acceptor_monomer.mol_code].keys())[0]
 
     def __repr__(self):
