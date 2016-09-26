@@ -309,7 +309,7 @@ class Met_pi(PiBase):
             print("Angle cannot be measured for {0} - no S projection defined.".format(self))
             return None
 
-    def parameters(self, dist_cutoff=6.0, angle_cutoff=90):
+    def parameters(self, dist_cutoff=6.0, angle_cutoff=75):
         """ Returns all Met-pi measurements, and whether these consistute a Met-pi interaction with defined parameters.
 
         Parameters
@@ -733,7 +733,7 @@ def find_C_hydrogen_bonds(ampal, dist_range=(1.5, 2.7), angular_cutoff=90.0):
         chbonds.extend(C_hydrogen_bonds(sector, dist_range, angular_cutoff))
     return list(set(chbonds))
 
-def find_Met_pi_interactions(polymer, acceptor_codes=None, dist_cutoff=6.0, angle_cutoff=90,inter_chain=True):
+def find_Met_pi_interactions(polymer, acceptor_codes=None, dist_cutoff=6.0, angle_cutoff=75,inter_chain=True):
     """Finds all Met-Aromatic interactions based on defined parameters
 
     Parameters
