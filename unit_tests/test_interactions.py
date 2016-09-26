@@ -67,7 +67,7 @@ class MetPiInteractionFinderTestCase(unittest.TestCase):
         test_path = os.path.join(os.path.dirname(isambard.__file__), 'unit_tests','testing_files','3qy1.pdb')
         test_pdb = isambard.ampal.convert_pdb_to_ampal(test_path)
         polypeptide = test_pdb[0]
-        self.assertEqual(len(isambard.ampal.interactions.find_Met_pi_interactions(polypeptide,acceptor_codes=['PHE','TYR','TRP'])))
+        self.assertEqual(len(isambard.ampal.interactions.find_Met_pi_interactions(polypeptide,acceptor_codes=['PHE','TYR','TRP'])),3)
 
 if __name__ == '__main__':
     unittest.main()
