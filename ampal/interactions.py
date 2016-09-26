@@ -247,7 +247,7 @@ class Cation_pi(PiBase):
         if self.donor.mol_code=="LYS":
             self.cation = self.donor["NZ"]
         elif self.donor.mol_code=="ARG":
-            self.cation = self.donor["CE"]
+            self.cation = self.donor["CZ"]
         else:
             raise AttributeError("{0} is not a recognized cationic amino acid.".format(self.donor.mol_code))
 
