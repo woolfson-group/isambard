@@ -255,7 +255,7 @@ class Met_pi(PiBase):
             raise NameError("{0} has multiple pi systems - pi_system argument must be defined from {1}.". \
                             format(self.acceptor_monomer.mol_code,
                                    all_pi_systems[self.acceptor_monomer.mol_code].keys()))
-        else:else:
+        else:
             self.pi_system = list(all_pi_systems[self.acceptor_monomer.mol_code].keys())[0]
 
     def __repr__(self):
