@@ -297,15 +297,12 @@ class Met_pi(PiBase):
         else:
             print("S projection cannot be defined for {0} - fewer than three atoms in the pi-system".format(self))
             return None
-
     @property
     def angle(self):
         """ Angle between C-H bond and normal to plane of pi system"""
-
         if not self.s_proj is None:
             pi_S_vector = self.s_proj - self.s_atom._vector
-            centre_of_pi_S_vector = self.s_atom._vector - self.pi_centre._vector
-            return angle_between_vectors(pi_S_vector, centre_of_pi_S_vector)
+            return angle_between_vectors(pi_S_vector, self.s_atom._vector)
         else:
             print("Angle cannot be measured for {0} - no S projection defined.".format(self))
             return None
