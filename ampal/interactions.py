@@ -307,6 +307,34 @@ class Met_pi(PiBase):
             print("Angle cannot be measured for {0} - no S projection defined.".format(self))
             return None
 
+    def parameters(self, dist_cutoff=6.0, angle_cutoff=75):
+        """ Returns all Met-pi measurements, and whether these consistute a Met-pi interaction with defined parameters.
+
+        Parameters
+        ----------
+        dist_cutoff : float
+            Maximum distance between proton and centre of pi system.
+        angle_cutoff : float
+            Maximum angle between C-H bond and normal to plane of pi system.
+        proj_cutoff : float
+            Maximum distance between projection of H onto plane of pi system and centre of pi system.
+
+        Returns
+        -------
+        answer : bool
+            Whether it constitutes a CH-pi intetaction.
+        measurements : dict
+            Calculated measurements.
+        """
+        if self.distance is None or self.distance > dist_cutoff:
+            return False, {'distance': self.distance,
+                           'angle': 'Not calculated'}
+        if self.angle is None or self.angle > angle_cutoff:
+            return False, {'distance': self.distance,
+                           'angle': self.angle}
+        return True, {'distance': self.distance,
+                      'angle': self.angle}
+
 class CH_pi(PiBase):
     """ Defines a CH-pi interaction in terms of donor C and H atoms and acceptor pi-system.
 
@@ -702,6 +730,54 @@ def find_C_hydrogen_bonds(ampal, dist_range=(1.5, 2.7), angular_cutoff=90.0):
     for sector in sectors.values():
         chbonds.extend(C_hydrogen_bonds(sector, dist_range, angular_cutoff))
     return list(set(chbonds))
+
+def find_Met_pi_interactions(polymer, acceptor_codes=None, dist_cutoff=6.0, angle_cutoff=75,inter_chain=True):
+    """Finds all Met-Aromatic interactions based on defined parameters
+
+    Parameters
+    ----------
+    monomer: Ampal object
+    acceptor_codes : list or None
+        optional list of mol codes of residues that will be considered as acceptors
+    dist_cutoff: float
+        max accepted distance between S and center of pi system that constitutes an interaction
+    angle_cutoff:float
+        max accepted angle between S and normal to pi system to constitute an interaction.
+    inter_chain : bool
+        If false, includes only Met-Pi interactions where the acceptor is in the same chain as the monomer donor
+
+    Returns
+
+    interactions : list
+        list of Met-Pi objects that fall within the bounds
+    """
+
+    interactions = []
+
+    if acceptor_codes:
+        pi_systems = {}
+        for acceptor in acceptor_codes:
+            if acceptor in all_pi_systems:
+                pi_systems[acceptor] = all_pi_systems[acceptor]
+
+    monomers = []
+
+    for monomer in polymer:
+        if monomer.mol_code == "MET":
+            monomers.append(monomer)
+
+    for monomer in monomers:
+        for residue in monomer.environment(include_self=False, inter_chain=inter_chain):
+            if residue.mol_code not in pi_systems:
+                continue
+            pi_codes = pi_systems[residue.mol_code]
+            for system in pi_codes:
+                possible_interaction = Met_pi(donor=monomer, acceptor=residue, pi_system=system)
+                within_parameters, parameters = possible_interaction.parameters(dist_cutoff=dist_cutoff,
+                                                                                angle_cutoff=angle_cutoff)
+                if within_parameters:
+                    interactions.append(possible_interaction)
+    return interactions
 
 def find_CH_pi_interactions(monomer, acceptor_codes=None, dist_cutoff=3.5, angle_cutoff=55, proj_cutoff=2,
                             inter_chain=True):
