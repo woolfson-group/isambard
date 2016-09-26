@@ -240,6 +240,49 @@ class PiBase(object):
     def acceptor_monomer(self):
         return self.acceptor
 
+class Cation_pi(PiBase):
+
+    def __init__(self, donor, cation, acceptor, pi_system=None):
+        super(Cation_pi,self).__init__(donor,acceptor)
+
+        self.cation = cation
+
+        if pi_system:
+            self.pi_system=pi_system
+        elif self.acceptor_monomer.mol_code not in all_pi_systems:
+            raise AttributeError("{0} has no defined pi systems - it cannot act as an acceptor.".\
+                                 format(self.acceptor_monomer.mol_code))
+        elif len(all_pi_systems[self.acceptor_monomer.mol_code]) > 1:
+            raise NameError("{0} has multiple pi systems - pi_system argument must be defined from {1}.". \
+                            format(self.acceptor_monomer.mol_code,
+                                   all_pi_systems[self.acceptor_monomer.mol_code].keys()))
+        else:
+            self.pi_system = list(all_pi_systems[self.acceptor_monomer.mol_code].keys())[0]
+
+    def __repr__(self):
+        return '<Cation-pi interaction ({0}{1}) {2} ||||| {3} ({4}{5})>'.format(self.donor.mol_code, \
+                                                                                    self.donor.id, self.cation, \
+                                                                                    self.pi_system, \
+                                                                                    self.acceptor.mol_code, \
+                                                                                    self.acceptor.id)
+    @property
+    def pi_atoms(self):
+        """ List of AMPAL Atoms making up acceptor pi system"""
+        pi_system_atoms = all_pi_systems[self.acceptor_monomer.mol_code][self.pi_system]
+        return [self.acceptor_monomer[x] for x in pi_system_atoms if x in self.acceptor_monomer.atoms]
+
+    @property
+    def pi_centre(self):
+        """ Coordinates as array of centre of pi system"""
+        return centre_of_mass([x._vector for x in self.pi_atoms])
+
+    def distance(self):
+        """ Distance between H atom and centre of pi system"""
+        if self.pi_atoms:
+            return distance(self.pi_centre, self.cation._vector)
+        else:
+            return None
+
 class Met_pi(PiBase):
 
     def __init__(self, donor, acceptor, pi_system=None):
