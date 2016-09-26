@@ -240,6 +240,102 @@ class PiBase(object):
     def acceptor_monomer(self):
         return self.acceptor
 
+class Met_pi(PiBase):
+
+    def __init__(self, donor, acceptor, pi_system=None):
+        super(Met_pi, self).__init__(donor,acceptor)
+        self.s = donor['SD']
+
+        if pi_system:
+            self.pi_system=pi_system
+        elif self.acceptor_monomer.mol_code not in all_pi_systems:
+            raise AttributeError("{0} has no defined pi systems - it cannot act as an acceptor.".\
+                                 format(self.acceptor_monomer.mol_code))
+        elif len(all_pi_systems[self.acceptor_monomer.mol_code]) > 1:
+            raise NameError("{0} has multiple pi systems - pi_system argument must be defined from {1}.". \
+                            format(self.acceptor_monomer.mol_code,
+                                   all_pi_systems[self.acceptor_monomer.mol_code].keys()))
+        else:
+            self.pi_system = list(all_pi_systems[self.acceptor_monomer.mol_code].keys())[0]
+
+    def __repr__(self):
+        return '<Met-pi interaction ({0}{1}) {2} ||||| {3} ({4}{5})>'.format(self.donor.mol_code, self.donor.id,
+                self.s, self.pi_system, self.acceptor.mol_code, self.acceptor.id)
+
+    @property
+    def s_atom(self):
+        """ Donor C atom as AMPAL Atom"""
+        return self.donor['SD']
+
+    @property
+    def pi_atoms(self):
+        """ List of AMPAL Atoms making up acceptor pi system"""
+        pi_system_atoms = all_pi_systems[self.acceptor_monomer.mol_code][self.pi_system]
+        return [self.acceptor_monomer[x] for x in pi_system_atoms if x in self.acceptor_monomer.atoms]
+
+    @property
+    def pi_centre(self):
+        """ Coordinates as array of centre of pi system"""
+        return centre_of_mass([x._vector for x in self.pi_atoms])
+
+    @property
+    def distance(self):
+        """ Distance between H atom and centre of pi system"""
+        if self.pi_atoms:
+            return distance(self.pi_centre, self.s_atom._vector)
+        else:
+            return None
+
+    @property
+    def s_proj(self):
+        """ Coordinates of projection of S atom onto plane of pi system."""
+        if len(self.pi_atoms) > 2:
+            pi1 = self.pi_atoms[0]
+            pi2 = self.pi_atoms[1]
+            pi3 = self.pi_atoms[2]
+            return find_foot_on_plane(pi1._vector, pi2._vector, pi3._vector, self.s_atom._vector)
+        else:
+            print("S projection cannot be defined for {0} - fewer than three atoms in the pi-system".format(self))
+            return None
+    @property
+    def angle(self):
+        """ Angle between C-H bond and normal to plane of pi system"""
+        if not self.s_proj is None:
+
+            centre_pi_S_vector = self.pi_centre - self.s_atom._vector
+            pi_S_vector = self.s_proj - self.s_atom._vector
+            return angle_between_vectors(pi_S_vector, centre_pi_S_vector)
+        else:
+            print("Angle cannot be measured for {0} - no S projection defined.".format(self))
+            return None
+
+    def parameters(self, dist_cutoff=6.0, angle_cutoff=75):
+        """ Returns all Met-pi measurements, and whether these consistute a Met-pi interaction with defined parameters.
+
+        Parameters
+        ----------
+        dist_cutoff : float
+            Maximum distance between proton and centre of pi system.
+        angle_cutoff : float
+            Maximum angle between C-H bond and normal to plane of pi system.
+        proj_cutoff : float
+            Maximum distance between projection of H onto plane of pi system and centre of pi system.
+
+        Returns
+        -------
+        answer : bool
+            Whether it constitutes a CH-pi intetaction.
+        measurements : dict
+            Calculated measurements.
+        """
+        if self.distance is None or self.distance > dist_cutoff:
+            return False, {'distance': self.distance,
+                           'angle': 'Not calculated'}
+        if self.angle is None or self.angle > angle_cutoff:
+            return False, {'distance': self.distance,
+                           'angle': self.angle}
+        return True, {'distance': self.distance,
+                      'angle': self.angle}
 
 class CH_pi(PiBase):
     """ Defines a CH-pi interaction in terms of donor C and H atoms and acceptor pi-system.
@@ -636,6 +732,54 @@ def find_C_hydrogen_bonds(ampal, dist_range=(1.5, 2.7), angular_cutoff=90.0):
     for sector in sectors.values():
         chbonds.extend(C_hydrogen_bonds(sector, dist_range, angular_cutoff))
     return list(set(chbonds))
+
+def find_Met_pi_interactions(polymer, acceptor_codes=None, dist_cutoff=6.0, angle_cutoff=75,inter_chain=True):
+    """Finds all Met-Aromatic interactions based on defined parameters
+
+    Parameters
+    ----------
+    monomer: Ampal object
+    acceptor_codes : list or None
+        optional list of mol codes of residues that will be considered as acceptors
+    dist_cutoff: float
+        max accepted distance between S and center of pi system that constitutes an interaction
+    angle_cutoff:float
+        max accepted angle between S and normal to pi system to constitute an interaction.
+    inter_chain : bool
+        If false, includes only Met-Pi interactions where the acceptor is in the same chain as the monomer donor
+
+    Returns
+
+    interactions : list
+        list of Met-Pi objects that fall within the bounds
+    """
+
+    interactions = []
+
+    if acceptor_codes:
+        pi_systems = {}
+        for acceptor in acceptor_codes:
+            if acceptor in all_pi_systems:
+                pi_systems[acceptor] = all_pi_systems[acceptor]
+
+    monomers = []
+
+    for monomer in polymer:
+        if monomer.mol_code == "MET":
+            monomers.append(monomer)
+
+    for monomer in monomers:
+        for residue in monomer.environment(include_self=False, inter_chain=inter_chain):
+            if residue.mol_code not in pi_systems:
+                continue
+            pi_codes = pi_systems[residue.mol_code]
+            for system in pi_codes:
+                possible_interaction = Met_pi(donor=monomer, acceptor=residue, pi_system=system)
+                within_parameters, parameters = possible_interaction.parameters(dist_cutoff=dist_cutoff,
+                                                                                angle_cutoff=angle_cutoff)
+                if within_parameters:
+                    interactions.append(possible_interaction)
+    return interactions
 
 def find_CH_pi_interactions(monomer, acceptor_codes=None, dist_cutoff=3.5, angle_cutoff=55, proj_cutoff=2,
                             inter_chain=True):

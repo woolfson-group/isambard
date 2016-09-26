@@ -59,5 +59,15 @@ class SaltBridgeFinderTestCase(unittest.TestCase):
         test_pdb = isambard.ampal.convert_pdb_to_ampal(test_path)
         self.assertEqual(len(isambard.ampal.interactions.find_salt_bridges(test_pdb)),29)
 
+class MetPiInteractionFinderTestCase(unittest.TestCase):
+    """Test Met-Pi interaction finding mechanism"""
+
+    def test_3qy1(self):
+        """Find number of Met-Pi interactions in 3qy1"""
+        test_path = os.path.join(os.path.dirname(isambard.__file__), 'unit_tests','testing_files','3qy1.pdb')
+        test_pdb = isambard.ampal.convert_pdb_to_ampal(test_path)
+        polypeptide = test_pdb[0]
+        self.assertEqual(len(isambard.ampal.interactions.find_Met_pi_interactions(polypeptide,acceptor_codes=['PHE','TYR','TRP'])),3)
+
 if __name__ == '__main__':
     unittest.main()
