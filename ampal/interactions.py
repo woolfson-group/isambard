@@ -265,7 +265,7 @@ class Met_pi(PiBase):
     @property
     def s_atom(self):
         """ Donor C atom as AMPAL Atom"""
-        return self.donor[self.s]
+        return self.donor['SD']
 
     @property
     def pi_atoms(self):
