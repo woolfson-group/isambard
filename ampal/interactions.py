@@ -301,8 +301,8 @@ class Met_pi(PiBase):
     def angle(self):
         """ Angle between C-H bond and normal to plane of pi system"""
         if not self.s_proj is None:
-            
-            centre_pi_S_vector = self.s_atom._vector - self.pi_centre
+
+            centre_pi_S_vector = self.pi_centre - self.s_atom._vector
             pi_S_vector = self.s_proj - self.s_atom._vector
             return angle_between_vectors(pi_S_vector, centre_pi_S_vector)
         else:
