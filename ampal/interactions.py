@@ -899,7 +899,7 @@ def find_cation_pi_interactions(ampal, dist_cutoff=(2.8, 6.6),angle_cutoff=(0,30
             pi_codes = pi_systems[acceptor.mol_code]
 
             for pi_code in pi_codes:
-                cpi = isambard.interactions.Cation_pi(donor, acceptor, pi_system=pi_code)
+                cpi = Cation_pi(donor, acceptor, pi_system=pi_code)
                 poss_ints.append(cpi)
 
     for cpi in poss_ints:
