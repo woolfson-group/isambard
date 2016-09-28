@@ -888,11 +888,9 @@ def find_cation_pi_interactions(ampal, dist_cutoff=(2.8, 6.6),angle_cutoff=(0,30
 
     for m in ampal.get_monomers():
 
-        if m.mol_code in allowed_donors:
+        if m.mol_code in allowed_donors and cationic_atoms[m.mol_code] in m.atoms:
 
-            if cationic_atoms[m.mol_code] in m.atoms:
-
-                donors.append(m)
+            donors.append(m)
 
         if m.mol_code in allowed_acceptors:
             acceptors.append(m)
