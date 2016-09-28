@@ -302,10 +302,10 @@ class Cation_pi(PiBase):
     @property
     def angle(self):
         """ Angle between C-H bond and normal to plane of pi system"""
-        if not self.s_proj is None:
+        if not self.cation_proj is None:
 
             centre_pi_cation_vector = self.pi_centre - self.cation._vector
-            pi_cation_vector = self.s_proj - self.cation._vector
+            pi_cation_vector = self.cation_proj - self.cation._vector
             return angle_between_vectors(pi_cation_vector, centre_pi_cation_vector)
         else:
             print("Angle cannot be measured for {0} - no S projection defined.".format(self))
