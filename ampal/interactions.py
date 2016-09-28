@@ -415,7 +415,7 @@ class Pi_pi(PiBase):
         super(Pi_pi,self).__init__(donor,acceptor)
 
         if pi_system1:
-            self.pisystem1 = pi_system1
+            self.pi_system1 = pi_system1
         elif self.donor_monomer.mol_code not in all_pi_systems:
             raise AttributeError("{0} has no identified pi systems - it cannot take part in a pi-pi interaction.". \
                                  format(self.donor_monomer.mol_code))
@@ -427,7 +427,7 @@ class Pi_pi(PiBase):
 
         if pi_system2:
             self.pi_system2 = pi_system2
-        elif self.acceptor_monomer.mol_code not in all_pi_systes:
+        elif self.acceptor_monomer.mol_code not in all_pi_systems:
             raise AttributeError("{0} has no identified pi systems - it cannot take part in a pi-pi interaction.".\
                                  format(self.acceptor_monomer.mol_code))
         elif len(all_pi_systems[self.acceptor_monomer.mol_code]) > 1:
@@ -439,16 +439,16 @@ class Pi_pi(PiBase):
 
 
     def __repr__(self):
-        return '<Pi-pi interaction ({0} {1} ||||| {2} {3}'.format(self.pi_system1, self.donor.id, \
-                                                                  self.acceptor.id, self.pi_system2)
+        return '<Pi-pi interaction ({0} {1} ||||| {2} {3}'.format(self.donor_monomer.mol_code, self.donor_monomer.id, \
+                                                                  self.acceptor_monomer.id, self.acceptor_monomer.mol_code)
     @property
     def pi_atoms1(self):
-        pi_system_atoms = all_pi_systems[self.donor_monomer.mol_code][self.pi_system]
+        pi_system_atoms = all_pi_systems[self.donor_monomer.mol_code][self.pi_system1]
         return [self.donor_monomer[x] for x in pi_system_atoms if x in self.donor_monomer.atoms]
 
     @property
     def pi_atoms2(self):
-        pi_system_atoms = all_pi_systems[self.acceptor_monomer.mol_code][self.pi_system]
+        pi_system_atoms = all_pi_systems[self.acceptor_monomer.mol_code][self.pi_system2]
         return [self.acceptor_monomer[x] for x in pi_system_atoms if x in self.acceptor_monomer.atoms]
 
     @property
@@ -485,13 +485,21 @@ class Pi_pi(PiBase):
             print("Projection cannot be defined for {0} - fewer than three atoms in the pi-system".format(self))
             return None
 
+    @property
     def distance(self):
         if self.pi_atoms1 and self.pi_atoms2:
             return distance(self.pi_centre1,self.pi_centre2)
-
-    def angle(self):
+    @property
+    def planar_angle(self):
         vec1 = self.pi_centre1 - self.pi_1_proj
         vec2 = self.pi_centre2 - self.pi_2_proj
+
+        return angle_between_vectors(vec1,vec2)
+
+    @property
+    def orientational_angle(self):
+        vec1 = self.donor_monomer['CB'] - self.pi_centre1
+        vec2 = self.acceptor_monomer['CB'] - self.pi_centre2
 
         return angle_between_vectors(vec1,vec2)
 
