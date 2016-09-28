@@ -287,6 +287,31 @@ class Cation_pi(PiBase):
         else:
             return None
 
+    @property
+    def cation_proj(self):
+        """ Coordinates of projection of cationic atom onto plane of pi system."""
+        if len(self.pi_atoms) > 2:
+            pi1 = self.pi_atoms[0]
+            pi2 = self.pi_atoms[1]
+            pi3 = self.pi_atoms[2]
+            return find_foot_on_plane(pi1._vector, pi2._vector, pi3._vector, self.cation._vector)
+        else:
+            print("Cationic projection cannot be defined for {0} - fewer than three atoms in the pi-system".format(self))
+            return None
+
+    @property
+    def angle(self):
+        """ Angle between C-H bond and normal to plane of pi system"""
+        if not self.s_proj is None:
+
+            centre_pi_cation_vector = self.pi_centre - self.cation._vector
+            pi_cation_vector = self.s_proj - self.cation._vector
+            return angle_between_vectors(pi_cation_vector, centre_pi_cation_vector)
+        else:
+            print("Angle cannot be measured for {0} - no S projection defined.".format(self))
+            return None
+
+
 class Met_pi(PiBase):
 
     def __init__(self, donor, acceptor, pi_system=None):
