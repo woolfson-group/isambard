@@ -875,6 +875,7 @@ def find_cation_pi_interactions(ampal, dist_cutoff=(2.8, 6.6),angle_cutoff=(0,30
     allowed_donors = ['LYS', 'ARG']
     allowed_acceptors = ['PHE', 'TRP', 'TYR']
 
+
     pi_systems = {}
     for acceptor in allowed_acceptors:
         if acceptor in all_pi_systems:
@@ -883,10 +884,15 @@ def find_cation_pi_interactions(ampal, dist_cutoff=(2.8, 6.6),angle_cutoff=(0,30
     donors = []
     acceptors = []
 
+    cationic_atoms = {'LYS' : 'NZ', 'ARG' : 'CZ'}
+
     for m in ampal.get_monomers():
 
         if m.mol_code in allowed_donors:
-            donors.append(m)
+
+            if cationic_atoms[m.mol_code] in m.atoms:
+
+                donors.append(m)
 
         if m.mol_code in allowed_acceptors:
             acceptors.append(m)
