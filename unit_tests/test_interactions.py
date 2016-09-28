@@ -69,5 +69,27 @@ class MetPiInteractionFinderTestCase(unittest.TestCase):
         polypeptide = test_pdb[0]
         self.assertEqual(len(isambard.ampal.interactions.find_Met_pi_interactions(polypeptide,acceptor_codes=['PHE','TYR','TRP'])),3)
 
+class CationPiInteractionFinderTestCase(unittest.TestCase):
+    """Test Cation-Pi finding mechanism"""
+
+    def test_1ek9(self):
+        test_path = os.path.join(os.path.dirname(isambard.__file__), 'unit_tests','testing_files','1ek9.pdb')
+        test_pdb = isambard.ampal.convert_pdb_to_ampal(test_path)
+        self.assertEquals(len(isambard.ampal.interactions.find_cation_pi_interactions(test_pdb)),4)
+
+    def test_1gui(self):
+        test_path = os.path.join(os.path.dirname(isambard.__file__),'unit_tests','testing_files','2ht0.pdb')
+        test_pdb = isambard.ampal.convert_pdb_to_ampal(test_path)
+        self.assertEqual(len(isambard.ampal.interactions.find_cation_pi_interactions(test_pdb)),1)
+
+class PiPiInteractionFinderTestCase(unittest.TestCase):
+    """Test PiPi interaction finding mechanism"""
+
+    def test_3qy1(self):
+        test_path=os.path.join(os.path.dirname(isambard.__file__), 'unit_tests','testing_files','3qy1.pdb')
+        test_pdb = isambard.ampal.convert_pdb_to_ampal(test_path)
+        face,edge = isambard.ampal.interactions.find_pi_pi_interactions(test_pdb)
+        self.assertEqual(len(edge),2)
+
 if __name__ == '__main__':
     unittest.main()

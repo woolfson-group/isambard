@@ -240,6 +240,78 @@ class PiBase(object):
     def acceptor_monomer(self):
         return self.acceptor
 
+class Cation_pi(PiBase):
+
+    def __init__(self, donor, acceptor, pi_system=None):
+        super(Cation_pi,self).__init__(donor,acceptor)
+        if self.donor.mol_code=="LYS":
+            self.cation = self.donor["NZ"]
+        elif self.donor.mol_code=="ARG":
+            self.cation = self.donor["CZ"]
+        else:
+            raise AttributeError("{0} is not a recognized cationic amino acid.".format(self.donor.mol_code))
+
+        if pi_system:
+            self.pi_system=pi_system
+        elif self.acceptor_monomer.mol_code not in all_pi_systems:
+            raise AttributeError("{0} has no defined pi systems - it cannot act as an acceptor.".\
+                                 format(self.acceptor_monomer.mol_code))
+        elif len(all_pi_systems[self.acceptor_monomer.mol_code]) > 1:
+            raise NameError("{0} has multiple pi systems - pi_system argument must be defined from {1}.". \
+                            format(self.acceptor_monomer.mol_code,
+                                   all_pi_systems[self.acceptor_monomer.mol_code].keys()))
+        else:
+            self.pi_system = list(all_pi_systems[self.acceptor_monomer.mol_code].keys())[0]
+
+    def __repr__(self):
+        return '<Cation-pi interaction ({0}{1}) {2} ||||| {3} ({4}{5})>'.format(self.donor.mol_code, \
+                                                                                    self.donor.id, self.cation, \
+                                                                                    self.pi_system, \
+                                                                                    self.acceptor_monomer.mol_code, \
+                                                                                    self.acceptor.id)
+    @property
+    def pi_atoms(self):
+        """ List of AMPAL Atoms making up acceptor pi system"""
+        pi_system_atoms = all_pi_systems[self.acceptor_monomer.mol_code][self.pi_system]
+        return [self.acceptor_monomer[x] for x in pi_system_atoms if x in self.acceptor_monomer.atoms]
+
+    @property
+    def pi_centre(self):
+        """ Coordinates as array of centre of pi system"""
+        return centre_of_mass([x._vector for x in self.pi_atoms])
+
+    def distance(self):
+        """ Distance between H atom and centre of pi system"""
+        if self.pi_atoms:
+            return distance(self.pi_centre, self.cation._vector)
+        else:
+            return None
+
+    @property
+    def cation_proj(self):
+        """ Coordinates of projection of cationic atom onto plane of pi system."""
+        if len(self.pi_atoms) > 2:
+            pi1 = self.pi_atoms[0]
+            pi2 = self.pi_atoms[1]
+            pi3 = self.pi_atoms[2]
+            return find_foot_on_plane(pi1._vector, pi2._vector, pi3._vector, self.cation._vector)
+        else:
+            print("Cationic projection cannot be defined for {0} - fewer than three atoms in the pi-system".format(self))
+            return None
+
+    @property
+    def angle(self):
+        """ Angle between C-H bond and normal to plane of pi system"""
+        if not self.cation_proj is None:
+
+            centre_pi_cation_vector = self.pi_centre - self.cation._vector
+            pi_cation_vector = self.cation_proj - self.cation._vector
+            return angle_between_vectors(pi_cation_vector, centre_pi_cation_vector)
+        else:
+            print("Angle cannot be measured for {0} - no S projection defined.".format(self))
+            return None
+
+
 class Met_pi(PiBase):
 
     def __init__(self, donor, acceptor, pi_system=None):
@@ -336,6 +408,100 @@ class Met_pi(PiBase):
                            'angle': self.angle}
         return True, {'distance': self.distance,
                       'angle': self.angle}
+
+class Pi_pi(PiBase):
+
+    def __init__(self,donor,acceptor,pi_system1=None,pi_system2=None):
+        super(Pi_pi,self).__init__(donor,acceptor)
+
+        if pi_system1:
+            self.pi_system1 = pi_system1
+        elif self.donor_monomer.mol_code not in all_pi_systems:
+            raise AttributeError("{0} has no identified pi systems - it cannot take part in a pi-pi interaction.". \
+                                 format(self.donor_monomer.mol_code))
+        elif len(all_pi_systems[self.donor_monomer.mol_code]) > 1:
+            raise NameError("{0} has multiple pi systems - pi_system argument must be defined from {1}".\
+                            format(self.donor_monomer.mol_code,all_pi_systems[self.donor_monomer.mol_code].keys()))
+        else:
+            self.pi_system1 = list(all_pi_systems[self.donor_monomer.mol_code].keys())[0]
+
+        if pi_system2:
+            self.pi_system2 = pi_system2
+        elif self.acceptor_monomer.mol_code not in all_pi_systems:
+            raise AttributeError("{0} has no identified pi systems - it cannot take part in a pi-pi interaction.".\
+                                 format(self.acceptor_monomer.mol_code))
+        elif len(all_pi_systems[self.acceptor_monomer.mol_code]) > 1:
+            raise NameError("{0] has multiple pi systems - pi system argument must be defined from {1}".\
+                            format(self.acceptor_monomer.mol_code,all_pi_systems[self.acceptor_monomer.mol_code].keys()))
+
+        else:
+            self.pi_system2 = list(all_pi_systems[self.acceptor_monomer.mol_code].keys())[0]
+
+
+    def __repr__(self):
+        return '<Pi-pi interaction ({0} {1} ||||| {2} {3}'.format(self.donor_monomer.mol_code, self.donor_monomer.id, \
+                                                                  self.acceptor_monomer.id, self.acceptor_monomer.mol_code)
+    @property
+    def pi_atoms1(self):
+        pi_system_atoms = all_pi_systems[self.donor_monomer.mol_code][self.pi_system1]
+        return [self.donor_monomer[x] for x in pi_system_atoms if x in self.donor_monomer.atoms]
+
+    @property
+    def pi_atoms2(self):
+        pi_system_atoms = all_pi_systems[self.acceptor_monomer.mol_code][self.pi_system2]
+        return [self.acceptor_monomer[x] for x in pi_system_atoms if x in self.acceptor_monomer.atoms]
+
+    @property
+    def pi_centre1(self):
+        """Coordinates as array of CoM of pi system"""
+        return centre_of_mass([x._vector for x in self.pi_atoms1])
+    @property
+    def pi_centre2(self):
+        return centre_of_mass([x._vector for x in self.pi_atoms2])
+
+    @property
+    def pi_1_proj(self):
+        """projection of first pi system onto plane of second"""
+
+        if len(self.pi_atoms2) > 2:
+            pi1 = self.pi_atoms2[0]
+            pi2 = self.pi_atoms2[1]
+            pi3 = self.pi_atoms2[2]
+            return find_foot_on_plane(pi1._vector, pi2._vector, pi3._vector, self.pi_centre1)
+        else:
+            print("Projection cannot be defined for {0} - fewer than three atoms in the pi-system".format(self))
+            return None
+
+    @property
+    def pi_2_proj(self):
+        """projection of second pi system onto plane of first
+        """
+        if len(self.pi_atoms1) > 2:
+            pi1 = self.pi_atoms1[0]
+            pi2 = self.pi_atoms1[1]
+            pi3 = self.pi_atoms1[2]
+            return find_foot_on_plane(pi1._vector, pi2._vector, pi3._vector, self.pi_centre2)
+        else:
+            print("Projection cannot be defined for {0} - fewer than three atoms in the pi-system".format(self))
+            return None
+
+    @property
+    def distance(self):
+        if self.pi_atoms1 and self.pi_atoms2:
+            return distance(self.pi_centre1,self.pi_centre2)
+    @property
+    def planar_angle(self):
+        vec1 = self.pi_centre1 - self.pi_1_proj
+        vec2 = self.pi_centre2 - self.pi_2_proj
+
+        return angle_between_vectors(vec1,vec2)
+
+    @property
+    def orientational_angle(self):
+        vec1 = self.donor_monomer['CB'] - self.pi_centre1
+        vec2 = self.acceptor_monomer['CB'] - self.pi_centre2
+
+        return angle_between_vectors(vec1,vec2)
 
 class CH_pi(PiBase):
     """ Defines a CH-pi interaction in terms of donor C and H atoms and acceptor pi-system.
@@ -738,7 +904,7 @@ def find_Met_pi_interactions(polymer, acceptor_codes=None, dist_cutoff=6.0, angl
 
     Parameters
     ----------
-    monomer: Ampal object
+    polymer: Ampal object
     acceptor_codes : list or None
         optional list of mol codes of residues that will be considered as acceptors
     dist_cutoff: float
@@ -779,6 +945,122 @@ def find_Met_pi_interactions(polymer, acceptor_codes=None, dist_cutoff=6.0, angl
                                                                                 angle_cutoff=angle_cutoff)
                 if within_parameters:
                     interactions.append(possible_interaction)
+    return interactions
+
+
+def find_pi_pi_interactions(polymer, dist_cutoff=(4.4, 5.5), angle_cutoff=(30, 60, 120)):
+    """Finds pi-pi stacking in structures, categorized into face-on and edge-on
+    Parameters
+    ----------
+    polymer : AMPAL
+        AMPAL object
+    dist_cutoff: (4.4,5.5)
+        Two distances for defining face-on and edge-on distances
+    angle_cutoff: (30,60,120)
+        planar angle definitions: Face on should be < 30 degrees, edge-on should be between 60 and 120.
+
+    Returns
+    -------
+    face_interactions : []
+        list of Pi_pi interaction objects that are face-on
+    edge_interactions : []
+        list of Pi_pi interaction objects that are edge-on
+
+    """
+    allowed_pi = ["PHE", "TRP", "TYR"]
+    pi_systems = {}
+    for pi in allowed_pi:
+        if pi in all_pi_systems:
+            pi_systems[pi] = all_pi_systems[pi]
+
+    pis = []
+
+    for m in polymer.get_monomers():
+        if m.mol_code in allowed_pi:
+            pis.append(m)
+
+    poss_ints = []
+    face_interactions = []
+    edge_interactions = []
+
+    for i in range(0, len(pis) - 1):
+        for j in range(i + 1, len(pis)):
+            pi_codes1 = pi_systems[pis[i].mol_code]
+            pi_codes2 = pi_systems[pis[j].mol_code]
+
+            for pi1, pi2 in zip(pi_codes1, pi_codes2):
+                pipi = Pi_pi(pis[i], pis[j], pi_system1=pi1, pi_system2=pi2)
+                poss_ints.append(pipi)
+
+    for poss_int in poss_ints:
+
+        if poss_int.distance <= dist_cutoff[0] and poss_int.planar_angle <= angle_cutoff[0]:
+
+            face_interactions.append(poss_int)
+
+        elif poss_int.distance <= dist_cutoff[1] and poss_int.planar_angle >= angle_cutoff[
+            1] and poss_int.planar_angle <= angle_cutoff[2]:
+            edge_interactions.append(poss_int)
+
+    return face_interactions, edge_interactions
+
+def find_cation_pi_interactions(ampal, dist_cutoff=(2.8, 6.6),angle_cutoff=(0,30)):
+    """Finds cation pi interactions between arg, lys, phe, tyr and trp usin metrics taken from ligand-interaction
+    diagram from Schrodinger
+
+    Parameters
+    ----------
+    ampal : AMPAL object
+    dist_cutoff : (2.8,6.6)
+        min/max bounds for distance
+    angle_cutoff: (0,30)
+        min/max bounds for angle between cation atom and normal to plane of aromatic
+
+    Returns
+    -------
+    interactions : []
+        list of CationPi interaction objects
+
+    """
+    allowed_donors = ['LYS', 'ARG']
+    allowed_acceptors = ['PHE', 'TRP', 'TYR']
+
+
+    pi_systems = {}
+    for acceptor in allowed_acceptors:
+        if acceptor in all_pi_systems:
+            pi_systems[acceptor] = all_pi_systems[acceptor]
+
+    donors = []
+    acceptors = []
+
+    cationic_atoms = {'LYS' : 'NZ', 'ARG' : 'CZ'}
+
+    for m in ampal.get_monomers():
+
+        if m.mol_code in allowed_donors and cationic_atoms[m.mol_code] in m.atoms:
+
+            donors.append(m)
+
+        if m.mol_code in allowed_acceptors:
+            acceptors.append(m)
+
+    poss_ints = []
+    interactions = []
+
+    for donor in donors:
+        for acceptor in acceptors:
+            pi_codes = pi_systems[acceptor.mol_code]
+
+            for pi_code in pi_codes:
+                cpi = Cation_pi(donor, acceptor, pi_system=pi_code)
+                poss_ints.append(cpi)
+
+    for cpi in poss_ints:
+        if cpi.distance() < dist_cutoff[1] and cpi.distance() > dist_cutoff[0]:
+            if cpi.angle <= angle_cutoff[1] and cpi.angle >= angle_cutoff[0]:
+                interactions.append(cpi)
+
     return interactions
 
 def find_CH_pi_interactions(monomer, acceptor_codes=None, dist_cutoff=3.5, angle_cutoff=55, proj_cutoff=2,
