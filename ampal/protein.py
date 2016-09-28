@@ -909,8 +909,8 @@ class Residue(Monomer):
         """
         super(Residue, self).__init__(atoms, monomer_id, ampal_parent=ampal_parent)
         if len(mol_code) == 3:
-            self.mol_code = mol_code
-            self.mol_letter = get_aa_letter(mol_code)
+            self.mol_code = mol_code.upper()
+            self.mol_letter = get_aa_letter(mol_code.upper())
         elif len(mol_code) == 1:
             self.mol_code = get_aa_code(mol_code)
             self.mol_letter = mol_code
