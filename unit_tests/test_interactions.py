@@ -94,7 +94,7 @@ class PiPiInteractionFinderTestCase(unittest.TestCase):
         test_path=os.path.join(os.path.dirname(isambard.__file__), 'unit_tests','testing_files','2ebo_1.mmol')
         test_pdb = isambard.ampal.convert_pdb_to_ampal(test_path)
         face,edge = isambard.ampal.interactions.find_pi_pi_interactions(test_pdb)
-        self.assertEqual(len(edge),1)
-        
+        self.assertEqual(len(edge),2)
+
 if __name__ == '__main__':
     unittest.main()
