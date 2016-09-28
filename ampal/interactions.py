@@ -412,7 +412,7 @@ class Met_pi(PiBase):
 class Pi_pi(PiBase):
 
     def __init__(self,donor,acceptor,pi_system1=None,pi_system2=None):
-        super(Pi_pi).__init__(donor,acceptor)
+        super(Pi_pi,self).__init__(donor,acceptor)
 
         if pi_system1:
             self.pisystem1 = pi_system1
