@@ -28,7 +28,7 @@ class LigandGroup(Polymer):
 
 
 class Ligand(Monomer):
-    def __init__(self, mol_code, atoms=None,
+    def __init__(self, mol_code='UNK', atoms=None,
                  monomer_id=' ', insertion_code=' ', is_hetero=False, ampal_parent=None):
         """Object containing Atoms, this is how Ligands are represented in ISAMBARD.
 
@@ -47,7 +47,7 @@ class Ligand(Monomer):
             True if is a hetero atom in pdb. Helps with PDB formatting.
         """
         super(Ligand, self).__init__(atoms, monomer_id, ampal_parent=ampal_parent)
-        self.mol_code = mol_code
+        self.mol_code = mol_code.upper()
         self.insertion_code = insertion_code
         self.is_hetero = is_hetero
 
