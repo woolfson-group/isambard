@@ -975,7 +975,7 @@ def find_pi_pi_interactions(polymer, dist_cutoff=(4.4, 5.5), angle_cutoff=(30, 6
 
     pis = []
 
-    for m in ampal.get_monomers():
+    for m in polymer.get_monomers():
         if m.mol_code in allowed_pi:
             pis.append(m)
 
