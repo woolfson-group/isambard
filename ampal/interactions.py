@@ -853,6 +853,62 @@ def find_Met_pi_interactions(polymer, acceptor_codes=None, dist_cutoff=6.0, angl
                     interactions.append(possible_interaction)
     return interactions
 
+
+def find_cation_pi_interactions(ampal, dist_cutoff=(2.8, 6.6),angle_cutoff=(0,30)):
+    """Finds cation pi interactions between arg, lys, phe, tyr and trp usin metrics taken from ligand-interaction
+    diagram from Schrodinger
+
+    Parameters
+    ----------
+    ampal : AMPAL object
+    dist_cutoff : (2.8,6.6)
+        min/max bounds for distance
+    angle_cutoff: (0,30)
+        min/max bounds for angle between cation atom and normal to plane of aromatic
+
+    Returns
+    -------
+    interactions : []
+        list of CationPi interaction objects
+
+    """
+    allowed_donors = ['LYS', 'ARG']
+    allowed_acceptors = ['PHE', 'TRP', 'TYR']
+
+    pi_systems = {}
+    for acceptor in allowed_acceptors:
+        if acceptor in all_pi_systems:
+            pi_systems[acceptor] = all_pi_systems[acceptor]
+
+    donors = []
+    acceptors = []
+
+    for m in ampal.get_monomers():
+
+        if m.mol_code in allowed_donors:
+            donors.append(m)
+
+        if m.mol_code in allowed_acceptors:
+            acceptors.append(m)
+
+    poss_ints = []
+    interactions = []
+
+    for donor in donors:
+        for acceptor in acceptors:
+            pi_codes = pi_systems[acceptor.mol_code]
+
+            for pi_code in pi_codes:
+                cpi = isambard.interactions.Cation_pi(donor, acceptor, pi_system=pi_code)
+                poss_ints.append(cpi)
+
+    for cpi in poss_ints:
+        if cpi.distance() < dist_cutoff[1] and cpi.distance() > dist_cutoff[0]:
+            if cpi.angle <= angle_cutoff[1] and cpi.angle >= angle_cutoff[0]:
+                interactions.append(cpi)
+
+    return interactions
+
 def find_CH_pi_interactions(monomer, acceptor_codes=None, dist_cutoff=3.5, angle_cutoff=55, proj_cutoff=2,
                             inter_chain=True):
     """ Finds all CH-pi interactions where an AMPAL monomer is the CH donor based on defined parameters.
