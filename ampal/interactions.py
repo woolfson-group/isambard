@@ -459,7 +459,41 @@ class Pi_pi(PiBase):
     def pi_centre2(self):
         return centre_of_mass([x._vector for x in self.pi_atoms2])
 
+    @property
+    def pi_1_proj(self):
+        """projection of first pi system onto plane of second"""
 
+        if len(self.pi_atoms2) > 2:
+            pi1 = self.pi_atoms2[0]
+            pi2 = self.pi_atoms2[1]
+            pi3 = self.pi_atoms2[2]
+            return find_foot_on_plane(pi1._vector, pi2._vector, pi3._vector, self.pi_centre1)
+        else:
+            print("Projection cannot be defined for {0} - fewer than three atoms in the pi-system".format(self))
+            return None
+
+    @property
+    def pi_2_proj(self):
+        """projection of second pi system onto plane of first
+        """
+        if len(self.pi_atoms1) > 2:
+            pi1 = self.pi_atoms1[0]
+            pi2 = self.pi_atoms1[1]
+            pi3 = self.pi_atoms1[2]
+            return find_foot_on_plane(pi1._vector, pi2._vector, pi3._vector, self.pi_centre2)
+        else:
+            print("Projection cannot be defined for {0} - fewer than three atoms in the pi-system".format(self))
+            return None
+
+    def distance(self):
+        if self.pi_atoms1 and self.pi_atoms2:
+            return distance(self.pi_centre1,self.pi_centre2)
+
+    def angle(self):
+        vec1 = self.pi_centre1 - self.pi_1_proj
+        vec2 = self.pi_centre2 - self.pi_2_proj
+
+        return angle_between_vectors(vec1,vec2)
 
 class CH_pi(PiBase):
     """ Defines a CH-pi interaction in terms of donor C and H atoms and acceptor pi-system.
