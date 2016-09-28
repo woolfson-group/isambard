@@ -409,6 +409,58 @@ class Met_pi(PiBase):
         return True, {'distance': self.distance,
                       'angle': self.angle}
 
+class Pi_pi(PiBase):
+
+    def __init__(self,donor,acceptor,pi_system1=None,pi_system2=None):
+        super(Pi_pi).__init__(donor,acceptor)
+
+        if pi_system1:
+            self.pisystem1 = pi_system1
+        elif self.donor_monomer.mol_code not in all_pi_systems:
+            raise AttributeError("{0} has no identified pi systems - it cannot take part in a pi-pi interaction.". \
+                                 format(self.donor_monomer.mol_code))
+        elif len(all_pi_systems[self.donor_monomer.mol_code]) > 1:
+            raise NameError("{0} has multiple pi systems - pi_system argument must be defined from {1}".\
+                            format(self.donor_monomer.mol_code,all_pi_systems[self.donor_monomer.mol_code].keys()))
+        else:
+            self.pi_system1 = list(all_pi_systems[self.donor_monomer.mol_code].keys())[0]
+
+        if pi_system2:
+            self.pi_system2 = pi_system2
+        elif self.acceptor_monomer.mol_code not in all_pi_systes:
+            raise AttributeError("{0} has no identified pi systems - it cannot take part in a pi-pi interaction.".\
+                                 format(self.acceptor_monomer.mol_code))
+        elif len(all_pi_systems[self.acceptor_monomer.mol_code]) > 1:
+            raise NameError("{0] has multiple pi systems - pi system argument must be defined from {1}".\
+                            format(self.acceptor_monomer.mol_code,all_pi_systems[self.acceptor_monomer.mol_code].keys()))
+
+        else:
+            self.pi_system2 = list(all_pi_systems[self.acceptor_monomer.mol_code].keys())[0]
+
+
+    def __repr__(self):
+        return '<Pi-pi interaction ({0} {1} ||||| {2} {3}'.format(self.pi_system1, self.donor.id, \
+                                                                  self.acceptor.id, self.pi_system2)
+    @property
+    def pi_atoms1(self):
+        pi_system_atoms = all_pi_systems[self.donor_monomer.mol_code][self.pi_system]
+        return [self.donor_monomer[x] for x in pi_system_atoms if x in self.donor_monomer.atoms]
+
+    @property
+    def pi_atoms2(self):
+        pi_system_atoms = all_pi_systems[self.acceptor_monomer.mol_code][self.pi_system]
+        return [self.acceptor_monomer[x] for x in pi_system_atoms if x in self.acceptor_monomer.atoms]
+
+    @property
+    def pi_centre1(self):
+        """Coordinates as array of CoM of pi system"""
+        return centre_of_mass([x._vector for x in self.pi_atoms1])
+    @property
+    def pi_centre2(self):
+        return centre_of_mass([x._vector for x in self.pi_atoms2])
+
+
+
 class CH_pi(PiBase):
     """ Defines a CH-pi interaction in terms of donor C and H atoms and acceptor pi-system.
 
