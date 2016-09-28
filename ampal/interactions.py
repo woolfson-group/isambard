@@ -948,6 +948,62 @@ def find_Met_pi_interactions(polymer, acceptor_codes=None, dist_cutoff=6.0, angl
     return interactions
 
 
+def find_pi_pi_interactions(polymer, dist_cutoff=(4.4, 5.5), angle_cutoff=(30, 60, 120)):
+    """Finds pi-pi stacking in structures, categorized into face-on and edge-on
+    Parameters
+    ----------
+    polymer : AMPAL
+        AMPAL object
+    dist_cutoff: (4.4,5.5)
+        Two distances for defining face-on and edge-on distances
+    angle_cutoff: (30,60,120)
+        planar angle definitions: Face on should be < 30 degrees, edge-on should be between 60 and 120.
+
+    Returns
+    -------
+    face_interactions : []
+        list of Pi_pi interaction objects that are face-on
+    edge_interactions : []
+        list of Pi_pi interaction objects that are edge-on
+
+    """
+    allowed_pi = ["PHE", "TRP", "TYR"]
+    pi_systems = {}
+    for pi in allowed_pi:
+        if pi in all_pi_systems:
+            pi_systems[pi] = all_pi_systems[pi]
+
+    pis = []
+
+    for m in ampal.get_monomers():
+        if m.mol_code in allowed_pi:
+            pis.append(m)
+
+    poss_ints = []
+    face_interactions = []
+    edge_interactions = []
+
+    for i in range(0, len(pis) - 1):
+        for j in range(i + 1, len(pis)):
+            pi_codes1 = pi_systems[pis[i].mol_code]
+            pi_codes2 = pi_systems[pis[j].mol_code]
+
+            for pi1, pi2 in zip(pi_codes1, pi_codes2):
+                pipi = Pi_pi(pis[i], pis[j], pi_system1=pi1, pi_system2=pi2)
+                poss_ints.append(pipi)
+
+    for poss_int in poss_ints:
+
+        if poss_int.distance <= dist_cutoff[0] and poss_int.planar_angle <= angle_cutoff[0]:
+
+            face_interactions.append(poss_int)
+
+        elif poss_int.distance <= dist_cutoff[1] and poss_int.planar_angle >= angle_cutoff[
+            1] and poss_int.planar_angle <= angle_cutoff[2]:
+            edge_interactions.append(poss_int)
+
+    return face_interactions, edge_interactions
+
 def find_cation_pi_interactions(ampal, dist_cutoff=(2.8, 6.6),angle_cutoff=(0,30)):
     """Finds cation pi interactions between arg, lys, phe, tyr and trp usin metrics taken from ligand-interaction
     diagram from Schrodinger
