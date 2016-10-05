@@ -36,7 +36,7 @@
     * Whenever changes are pushed to master CircleCI downloads ISAMBARD and runs the unit tests
     * There is a badge in the `README.md` detailing the current CircleCI status 
 
-[**See full change log**](https://github.com/woolfson-group/isambard/wiki/Change-Log)
+[**See full change log**](https://github.com/woolfson-group/isambard_dev/wiki/Change-Log)
 
 ##Principal Investigator
 Derek N. Woolfson (d.n.woolfson@bristol.ac.uk)
