@@ -144,8 +144,9 @@ class NPiStarInteraction(object):
     def angle(self):
         """Angle between the O-C n->pi* bond and the acceptor C=O bond"""
 
-        oc_vector = self.o2._vector - self.c2._vector
-        return angle_between_vectors(self.o1,oc_vector)
+        oc_vector = self.c2._vector - self.o1._vector
+        co_vector = self.c2._vector - self.o2._vector
+        return angle_between_vectors(oc_vector, co_vector)
 
     @property
     def carbonyl_dihedral(self):
@@ -1325,7 +1326,6 @@ def find_N_pis(polymer,dist_cutoff=3.22,angle_max=125,angle_min=95,dihedral_min=
     for int in poss_interactions:
 
         if int.distance <= dist_cutoff and int.angle >= angle_min and int.angle <= angle_max and abs(int.carbonyl_dihedral) >= dihedral_min:
-
             interactions.append(int)
 
     return interactions

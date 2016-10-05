@@ -48,7 +48,7 @@ class NPiStarInteractionFinderTestCase(unittest.TestCase):
     def test_3qy1(self):
         test_path=os.path.join(os.path.dirname(isambard.__file__),'unit_tests','testing_files','3qy1.pdb')
         test_pdb = isambard.ampal.convert_pdb_to_ampal(test_path)
-        self.assertEqual(len(isambard.ampal.interactions.find_N_pis(test_pdb)), 48)
+        self.assertEqual(len(isambard.ampal.interactions.find_N_pis(test_pdb)), 239)
 
 class SaltBridgeFinderTestCase(unittest.TestCase):
     """Test salt bridge finding mechanism"""
