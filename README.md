@@ -6,6 +6,15 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/woolfson-group/isambard/blob/master/LICENSE.md)
 
 ## Recent Changes
+#### v0.6.0
+* Updated interactions.py with non-covalent interaction classes and methods for identifying them
+    * N->pi* interactions
+    * Cation->pi interactions
+    * Simple salt bridge interactions
+    * Methionine-aromatic interactions
+    * Pi-Pi interactions
+    * Hydrogen bonds with C-H group as a donor
+
 #### v0.5.0
 * Added BUDE 2016 Force Field
     * Currently is not the default force field so must be enabled by editing the `settings.json` file or rerunning `configure.py`
