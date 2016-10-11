@@ -8,6 +8,9 @@
 ## Recent Changes
 
 #### v0.6
+##### v0.6.2
+* Minor bug-fix
+     * Caught potential error in loop-closure method
 ##### v0.6.1
 * New BUFF Structure
     * All AMPAL objects should now be picklable after scoring
