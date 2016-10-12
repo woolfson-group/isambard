@@ -8,16 +8,20 @@
 ## Recent Changes
 
 #### v0.6
+
 ##### v0.6.3
 * Fix for `Optimizers` on Windows
     * Will now use `map` rather than `futures.ProcessPoolExecutor().map` if the platform is Windows or only a single core is used
+
 ##### v0.6.2
 * Minor bug-fix
      * Caught potential error in loop-closure method
+
 ##### v0.6.1
 * New BUFF Structure
     * All AMPAL objects should now be picklable after scoring
     * BUFF runs 33-50% faster
+
 ##### v0.6.0
 * Updated interactions.py with non-covalent interaction classes and methods for identifying them
     * N->pi* interactions
