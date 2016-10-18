@@ -9,6 +9,10 @@
 
 #### v0.6
 
+##### v0.6.4
+* `relabel_monomers`
+    *Added option for relabelling monomers by an integer value as well as a list of labels
+
 ##### v0.6.3
 * Fix for `Optimizers` on Windows
     * Will now use `map` rather than `futures.ProcessPoolExecutor().map` if the platform is Windows or only a single core is used
