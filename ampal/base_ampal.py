@@ -310,7 +310,7 @@ class Polymer(BaseAmpal):
         atoms = itertools.chain(*(list(m.get_atoms(inc_alt_states=inc_alt_states)) for m in monomers))
         return atoms
 
-    def relabel_monomers(self, labels=None):
+    def relabel_monomers(self, labels=None, start=None):
         """Relabels the component Monomers either in numerical order or using a list of labels.
 
         Parameters
@@ -318,18 +318,36 @@ class Polymer(BaseAmpal):
         labels : list
             A list of new labels.
 
+        start : int
+            New starting value for the monomers. Used for relabelling chains from a particular residue number.
+
         Raises
         ------
         ValueError
             Raised if the number of labels does not match the number of component Monoer objects.
+        ValueError
+            Raised if labels and start are both set
+        ValueError
+            Raised if start is not an integer
+
         """
-        if labels:
+        if labels and start:
+            raise ValueError('Cannot use both labels= and start=')
+
+        elif labels:
             if len(self._monomers) == len(labels):
                 for monomer, label in zip(self._monomers, labels):
                     monomer.id = str(label)
             else:
                 raise ValueError('Number of Monomers ({}) and number of labels ({}) must be equal.'.format(
                     len(self._monomers), len(labels)))
+        elif start:
+
+            if type(start) != int:
+                raise ValueError('Start value is not an integer')
+            for i, monomer in enumerate(self._monomers):
+                monomer.id = str((start-1)+i+1)
+
         else:
             for i, monomer in enumerate(self._monomers):
                 monomer.id = str(i + 1)
