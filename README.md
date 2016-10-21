@@ -1,6 +1,6 @@
 #ISAMBARD
 ###Intelligent System for Analysis, Model Building And Rational Design of proteins.
-#### Version 0.6.4 (Oct 12, 2016), Woolfson Group, University of Bristol.
+#### Version 0.6.5 (Oct 12, 2016), Woolfson Group, University of Bristol.
 [![CircleCI](https://circleci.com/gh/woolfson-group/isambard_dev.svg?style=shield&circle-token=0af7a4c0efd449fda7db2d1deef2745b8d289dcf)](https://circleci.com/gh/woolfson-group/isambard_dev)
 [![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg?maxAge=2592000)](https://gitter.im/woolfson-group/isambard?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/woolfson-group/isambard/blob/master/LICENSE.md)
@@ -8,10 +8,13 @@
 ## Recent Changes
 
 #### v0.6
+##### v0.6.5
+* `coiledcoil.py`
+    * Fixed coiled-coil interface angles in basis set parameters
 
 ##### v0.6.4
 * `relabel_monomers`
-    *Added option for relabelling monomers by an integer value as well as a list of labels
+    * Added option for relabelling monomers by an integer value as well as a list of labels
 
 ##### v0.6.3
 * Fix for `Optimizers` on Windows
