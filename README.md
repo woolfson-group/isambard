@@ -1,39 +1,33 @@
 #ISAMBARD
 ###Intelligent System for Analysis, Model Building And Rational Design of proteins.
-#### Version 0.6.6 (Oct 21, 2016), Woolfson Group, University of Bristol.
+#### Version 0.7.0 (Oct 24, 2016), Woolfson Group, University of Bristol.
 [![CircleCI](https://circleci.com/gh/woolfson-group/isambard_dev.svg?style=shield&circle-token=0af7a4c0efd449fda7db2d1deef2745b8d289dcf)](https://circleci.com/gh/woolfson-group/isambard_dev)
 [![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg?maxAge=2592000)](https://gitter.im/woolfson-group/isambard?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/woolfson-group/isambard/blob/master/LICENSE.md)
 
 ## Recent Changes
 
+#### v0.7
+
+##### v0.7.0
+* New force field assignment structure
+    * Now uses the `update_ff` method to manage caching and updating force field parameters
+
 #### v0.6
 
-##### v0.6.6
+##### v0.6.0-0.6.5
 * Fixed a bug where the `TAPolypeptie` did not assign the `ampal_parent` attribute during `build`
-
-##### v0.6.5
 * `coiledcoil.py`
     * Fixed coiled-coil interface angles in basis set parameters
-
-##### v0.6.4
 * `relabel_monomers`
     * Added option for relabelling monomers by an integer value as well as a list of labels
-
-##### v0.6.3
 * Fix for `Optimizers` on Windows
     * Will now use `map` rather than `futures.ProcessPoolExecutor().map` if the platform is Windows or only a single core is used
-
-##### v0.6.2
 * Minor bug-fix
      * Caught potential error in loop-closure method
-
-##### v0.6.1
 * New BUFF Structure
     * All AMPAL objects should now be picklable after scoring
     * BUFF runs 33-50% faster
-
-##### v0.6.0
 * Updated interactions.py with non-covalent interaction classes and methods for identifying them
     * N->pi* interactions
     * Cation->pi interactions

@@ -468,6 +468,7 @@ class Polypeptide(Polymer):
         self.extend(other)
         if relabel:
             self.relabel_all()
+        self.tags['assigned_ff'] = False
         return
 
     def n_join(self, other, psi=-40.76, omega=-178.25, phi=-65.07, o_c_n_angle=None, c_n_ca_angle=None, c_n_length=None,
@@ -555,6 +556,7 @@ class Polypeptide(Polymer):
         self._monomers = other._monomers + self._monomers
         if relabel:
             self.relabel_all()
+        self.tags['assigned_ff'] = False
         return
 
     def tag_secondary_structure(self, force=False):
@@ -812,6 +814,7 @@ class Polypeptide(Polymer):
             else:
                 acetate.rotate(ref_angle-start_angle, axis=acetate['C']._vector-acetate['CA']._vector,
                            point=acetate['C']._vector)
+            acetate['OXT'].ampal_parent = self._monomers[-1]
             self._monomers[-1].atoms['OXT'] = acetate['OXT']
             diff = acetate['O']._vector - self._monomers[-1]['O']._vector
             self._monomers[-1]['O']._vector += diff
@@ -844,6 +847,7 @@ class Polypeptide(Polymer):
             self.ligands.append(Ligand(OrderedDict(NH2 = acetamide['NH2']), mol_code='NH2'))
         else:
             pass
+        self.tags['assigned_ff'] = False
         return
 
     def n_cap(self, n_cap='acetyl', cap_dihedral=None):
@@ -889,6 +893,7 @@ class Polypeptide(Polymer):
             self.ligands.append(Ligand(acetamide, mol_code='ACM'))
         else:
             pass  # just in case we want to build different caps in later
+        self.tags['assigned_ff'] = False
         return
 
 
