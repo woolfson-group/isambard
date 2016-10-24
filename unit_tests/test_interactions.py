@@ -10,7 +10,7 @@ class RadiusOfGyrationTestCase(unittest.TestCase):
         file_path=os.path.join(os.path.dirname(isambard.__file__), 'unit_tests', 'testing_files', '3qy1.pdb')
         m = isambard.ampal.convert_pdb_to_ampal(file_path)
         r_o_g = m.radius_of_gyration
-        self.assertAlmostEqual(r_o_g,20.4308)
+        self.assertAlmostEqual(r_o_g,20.948377)
 
 
 class CovalentBondFinderTestCase(unittest.TestCase):

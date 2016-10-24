@@ -253,7 +253,7 @@ class Assembly(BaseAmpal):
     def relabel_atoms(self, start=1):
         """Relabels all Atoms in numerical order, offset by the start parameter."""
         counter = start
-        for atom in self.get_atoms(ligands=True,ignore_hydrogens=ignore_hydrogens):
+        for atom in self.get_atoms(ligands=True,ignore_hydrogens=False):
             atom.id = counter
             counter += 1
         return
