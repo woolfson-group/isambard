@@ -45,6 +45,12 @@ def centre_of_atoms(atoms, mass_weighted=True):
         masses = []
     return centre_of_mass(points=points, masses=masses)
 
+def radius_of_gyration(atoms):
+    """Returns the radius of gyration of a set of atoms
+        """
+    c_o_m = centre_of_atoms(atoms,mass_weighted=False)
+    r = [distance(r,c_o_m) for r in atoms]
+    return sum(r) / len(r)
 
 def write_pdb(residues, chain_id=' ', alt_states=False, strip_states=False):
     """Writes a pdb file for a list of residues.
@@ -288,7 +294,7 @@ class Polymer(BaseAmpal):
             monomers = self._monomers
         return iter(monomers)
 
-    def get_atoms(self, ligands=True, inc_alt_states=False):
+    def get_atoms(self, ligands=True, inc_alt_states=False,ignore_hydrogens=False):
         """Flat list of all the Atoms in the Polymer.
 
         Parameters
@@ -307,7 +313,7 @@ class Polymer(BaseAmpal):
             monomers = self._monomers + self.ligands._monomers
         else:
             monomers = self._monomers
-        atoms = itertools.chain(*(list(m.get_atoms(inc_alt_states=inc_alt_states)) for m in monomers))
+        atoms = itertools.chain(*(list(m.get_atoms(inc_alt_states=inc_alt_states,ignore_hydrogens=ignore_hydrogens)) for m in monomers))
         return atoms
 
     def relabel_monomers(self, labels=None, start=None):
@@ -472,9 +478,15 @@ class Monomer(BaseAmpal):
     def get_monomers(self):
         return [self]
 
-    def get_atoms(self, inc_alt_states=False):
+    def get_atoms(self, inc_alt_states=False, ignore_hydrogens=False):
         if inc_alt_states:
-            return itertools.chain(*[x[1].values() for x in sorted(list(self.states.items()))])
+            if ignore_hydrogens:
+                return itertools.chain(*[x[1].values() for x in sorted(list(self.states.items())) if x.element != "H"])
+            else:
+                return itertools.chain(*[x[1].values() for x in sorted(list(self.states.items()))])
+        elif ignore_hydrogens:
+            return itertools.chain([x for x in self.atoms.values() if x.element != "H"])
+
         else:
             return self.atoms.values()
 
