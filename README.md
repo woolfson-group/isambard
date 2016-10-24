@@ -10,13 +10,12 @@
 #### v0.7
 
 ##### v0.7.0
-
 * New force field assignment structure
     * Now uses the `update_ff` method to manage caching and updating force field parameters
 
 #### v0.6
 
-##### v0.6.0-5
+##### v0.6.0-0.6.5
 * Fixed a bug where the `TAPolypeptie` did not assign the `ampal_parent` attribute during `build`
 * `coiledcoil.py`
     * Fixed coiled-coil interface angles in basis set parameters
