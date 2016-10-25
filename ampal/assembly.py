@@ -1,7 +1,7 @@
 from collections import Counter
 import itertools
 
-from ampal.base_ampal import BaseAmpal, Polymer, find_atoms_within_distance
+from ampal.base_ampal import BaseAmpal, Polymer, find_atoms_within_distance, centre_of_atoms, radius_of_gyration
 from ampal.ligands import LigandGroup, Ligand
 from ampal.analyse_protein import sequence_molecular_weight, sequence_molar_extinction_280, \
     sequence_isoelectric_point
@@ -9,6 +9,7 @@ from buff import score_ampal
 from external_programs.scwrl import pack_sidechains
 from external_programs.naccess import run_naccess,extract_residue_accessibility
 from settings import global_settings
+from tools.geometry import distance
 
 
 class AmpalContainer(object):
@@ -184,7 +185,7 @@ class Assembly(BaseAmpal):
             ligand_list = [x for x in self.get_monomers() if isinstance(x, Ligand) and not x.is_solvent]
         return LigandGroup(monomers=ligand_list)
 
-    def get_atoms(self, ligands=True, pseudo_group=False, inc_alt_states=False):
+    def get_atoms(self, ligands=True, pseudo_group=False, inc_alt_states=False, ignore_hydrogens=False):
         """ Flat list of all the Atoms in the Assembly.
 
         Parameters
@@ -195,6 +196,8 @@ class Assembly(BaseAmpal):
             Include pseudo_group atoms.
         inc_alt_states : bool
             Include alternate side chain conformations.
+        ignore_hydrogens : bool
+            Ignores hydrogen atoms
 
         Returns
         -------
@@ -202,13 +205,12 @@ class Assembly(BaseAmpal):
             All the atoms as a iterator.
         """
         atoms = itertools.chain(
-            *(list(m.get_atoms(inc_alt_states=inc_alt_states)) for m in self.get_monomers(ligands=ligands,
-                                                                                          pseudo_group=pseudo_group)))
+            *(list(m.get_atoms(inc_alt_states=inc_alt_states,ignore_hydrogens=ignore_hydrogens)) for m in self.get_monomers(ligands=ligands,pseudo_group=pseudo_group)))
         return atoms
 
     def is_within(self, cutoff_dist, point, ligands=True):
         """Returns all atoms in the ampal object that are within the cut-off distance from the input point."""
-        return find_atoms_within_distance(self.get_atoms(ligands=ligands), cutoff_dist, point)
+        return find_atoms_within_distance(self.get_atoms(ligands=ligands,ignore_hydrogens=ignore_hydrogens), cutoff_dist, point)
 
     def relabel_all(self):
         """Relabels all contained Polymers, Monomers and Atoms with default labeling."""
@@ -251,7 +253,7 @@ class Assembly(BaseAmpal):
     def relabel_atoms(self, start=1):
         """Relabels all Atoms in numerical order, offset by the start parameter."""
         counter = start
-        for atom in self.get_atoms(ligands=True):
+        for atom in self.get_atoms(ligands=True,ignore_hydrogens=False):
             atom.id = counter
             counter += 1
         return
@@ -361,6 +363,11 @@ class Assembly(BaseAmpal):
     @property
     def isoelectric_point(self):
         return sequence_isoelectric_point(''.join(self.sequences))
+
+    @property
+    def radius_of_gyration(self):
+        """Returns the radius of gyration of the non-hydrogen atoms in the Assembly"""
+        return radius_of_gyration(list(self.get_atoms(ignore_hydrogens=True)))
 
     @property
     def fasta(self):
