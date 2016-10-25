@@ -20,7 +20,7 @@
 
 #### v0.6
 
-##### v0.6.0-0.6.5
+##### v0.6.0-0.6.6
 * Fixed a bug where the `TAPolypeptie` did not assign the `ampal_parent` attribute during `build`
 * `coiledcoil.py`
     * Fixed coiled-coil interface angles in basis set parameters
