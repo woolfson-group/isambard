@@ -1,7 +1,7 @@
 from collections import Counter
 import itertools
 
-from ampal.base_ampal import BaseAmpal, Polymer, find_atoms_within_distance
+from ampal.base_ampal import BaseAmpal, Polymer, find_atoms_within_distance, centre_of_atoms, radius_of_gyration
 from ampal.ligands import LigandGroup, Ligand
 from ampal.analyse_protein import sequence_molecular_weight, sequence_molar_extinction_280, \
     sequence_isoelectric_point
@@ -9,6 +9,7 @@ from buff import score_ampal
 from external_programs.scwrl import pack_sidechains
 from external_programs.naccess import run_naccess,extract_residue_accessibility
 from settings import global_settings
+from tools.geometry import distance
 
 
 class AmpalContainer(object):
@@ -184,7 +185,7 @@ class Assembly(BaseAmpal):
             ligand_list = [x for x in self.get_monomers() if isinstance(x, Ligand) and not x.is_solvent]
         return LigandGroup(monomers=ligand_list)
 
-    def get_atoms(self, ligands=True, pseudo_group=False, inc_alt_states=False):
+    def get_atoms(self, ligands=True, pseudo_group=False, inc_alt_states=False, ignore_hydrogens=False):
         """ Flat list of all the Atoms in the Assembly.
 
         Parameters
@@ -195,6 +196,8 @@ class Assembly(BaseAmpal):
             Include pseudo_group atoms.
         inc_alt_states : bool
             Include alternate side chain conformations.
+        ignore_hydrogens : bool
+            Ignores hydrogen atoms
 
         Returns
         -------
@@ -202,13 +205,12 @@ class Assembly(BaseAmpal):
             All the atoms as a iterator.
         """
         atoms = itertools.chain(
-            *(list(m.get_atoms(inc_alt_states=inc_alt_states)) for m in self.get_monomers(ligands=ligands,
-                                                                                          pseudo_group=pseudo_group)))
+            *(list(m.get_atoms(inc_alt_states=inc_alt_states,ignore_hydrogens=ignore_hydrogens)) for m in self.get_monomers(ligands=ligands,pseudo_group=pseudo_group)))
         return atoms
 
     def is_within(self, cutoff_dist, point, ligands=True):
         """Returns all atoms in the ampal object that are within the cut-off distance from the input point."""
-        return find_atoms_within_distance(self.get_atoms(ligands=ligands), cutoff_dist, point)
+        return find_atoms_within_distance(self.get_atoms(ligands=ligands,ignore_hydrogens=ignore_hydrogens), cutoff_dist, point)
 
     def relabel_all(self):
         """Relabels all contained Polymers, Monomers and Atoms with default labeling."""
@@ -251,7 +253,7 @@ class Assembly(BaseAmpal):
     def relabel_atoms(self, start=1):
         """Relabels all Atoms in numerical order, offset by the start parameter."""
         counter = start
-        for atom in self.get_atoms(ligands=True):
+        for atom in self.get_atoms(ligands=True,ignore_hydrogens=False):
             atom.id = counter
             counter += 1
         return
@@ -363,6 +365,11 @@ class Assembly(BaseAmpal):
         return sequence_isoelectric_point(''.join(self.sequences))
 
     @property
+    def radius_of_gyration(self):
+        """Returns the radius of gyration of the non-hydrogen atoms in the Assembly"""
+        return radius_of_gyration(list(self.get_atoms(ignore_hydrogens=True)))
+
+    @property
     def fasta(self):
         """Generates a FASTA string for the Assembly.
 
@@ -391,14 +398,86 @@ class Assembly(BaseAmpal):
         return fasta_str
 
     def get_interaction_energy(self, assign_ff=True, ff=None, mol2=False, force_ff_assign=False, threshold=1.1):
+        """Calculates the interaction energy of the AMPAL object.
+
+        This method is assigned to the buff_interaction_energy property,
+        using the default arguments.
+
+        Parameters
+        ----------
+        assign_ff: bool
+            If true the force field will be updated if required.
+        ff: BuffForceField
+            The force field to be used for scoring.
+        mol2: bool
+            If true, mol2 style labels will also be used.
+        force_ff_assign: bool
+            If true, the force field will be completely reassigned, ignoring the
+            cached parameters.
+        threshold: float
+            Cutoff distance for assigning interactions that are covalent bonds.
+
+        Returns
+        -------
+        BUFF_score: BUFFScore
+            A BUFFScore object with information about each of the interactions and
+            the atoms involved.
+        """
         if not ff:
             ff = global_settings['buff']['force_field']
         if assign_ff:
-            if ('assigned_ff' not in self.tags) or force_ff_assign:
-                self.assign_force_field(ff, mol2=mol2)
+            for molecule in self._molecules:
+                if hasattr(molecule, 'update_ff'):
+                    molecule.update_ff(ff, mol2=mol2, force_ff_assign=force_ff_assign)
+                else:
+                    raise AttributeError(
+                        'The following molecule does not have a update_ff method:\n{}\n'
+                        'If this is a custom molecule type it should inherit from BaseAmpal:'.format(molecule))
         return score_ampal(self, ff, threshold=threshold)
 
     buff_interaction_energy = property(get_interaction_energy)
+
+    def get_internal_energy(self, assign_ff=True, ff=None, mol2=False, force_ff_assign=False, threshold=1.1):
+        """Calculates the internal energy of the AMPAL object.
+
+        THIS METHOD REIMPLEMENTS THE BaseAmpal VERSION. This is so that
+        the force field is updated if any of its molecules need updating.
+        This method is assigned to the buff_internal_energy property,
+        using the default arguments.
+
+        Parameters
+        ----------
+        assign_ff: bool
+            If true the force field will be updated if required.
+        ff: BuffForceField
+            The force field to be used for scoring.
+        mol2: bool
+            If true, mol2 style labels will also be used.
+        force_ff_assign: bool
+            If true, the force field will be completely reassigned, ignoring the
+            cached parameters.
+        threshold: float
+            Cutoff distance for assigning interactions that are covalent bonds.
+
+        Returns
+        -------
+        BUFF_score: BUFFScore
+            A BUFFScore object with information about each of the interactions and
+            the atoms involved.
+        """
+        if not ff:
+            ff = global_settings['buff']['force_field']
+        if assign_ff:
+            for molecule in self._molecules:
+                if hasattr(molecule, 'update_ff'):
+                    molecule.update_ff(ff, mol2=mol2, force_ff_assign=force_ff_assign)
+                else:
+                    raise AttributeError(
+                        'The following molecule does not have a update_ff method:\n{}\n'
+                        'If this is a custom molecule type it should inherit from BaseAmpal:'.format(molecule))
+        return score_ampal(self, ff, threshold=threshold, internal=True)
+
+    buff_internal_energy = property(get_internal_energy)
 
     def pack_new_sequences(self, sequences):
         """Packs a new sequence onto each Polymer in the Assembly using SCWRL4.

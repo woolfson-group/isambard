@@ -45,6 +45,12 @@ def centre_of_atoms(atoms, mass_weighted=True):
         masses = []
     return centre_of_mass(points=points, masses=masses)
 
+def radius_of_gyration(atoms):
+    """Returns the radius of gyration of a set of atoms
+        """
+    c_o_m = centre_of_atoms(atoms,mass_weighted=False)
+    r = [distance(r,c_o_m) for r in atoms]
+    return sum(r) / len(r)
 
 def write_pdb(residues, chain_id=' ', alt_states=False, strip_states=False):
     """Writes a pdb file for a list of residues.
@@ -152,10 +158,17 @@ class BaseAmpal(object):
         else:
             atoms = self.get_atoms(inc_alt_states=True)
         for atom in atoms:
+            w_str = None
             if atom.element == 'H':
                 continue
             elif atom.ampal_parent.mol_code in ff:
-                a_ff_id = (atom.ampal_parent.mol_code, atom.res_label)
+                if atom.res_label in ff[atom.ampal_parent.mol_code]:
+                    a_ff_id = (atom.ampal_parent.mol_code, atom.res_label)
+                elif atom.res_label in ff['WLD']:
+                    a_ff_id = ('WLD', atom.res_label)
+                else:
+                    w_str = '{} atom is not parameterised in the selected force field for {} residues,' \
+                            ' this will be ignored.'.format(atom.res_label, atom.ampal_parent.mol_code)
             elif atom.res_label in ff['WLD']:
                 a_ff_id = ('WLD', atom.res_label)
             elif mol2 and (atom.ampal_parent.mol_code.capitalize() in ff['MOL2']):
@@ -167,18 +180,69 @@ class BaseAmpal(object):
                 else:
                     w_str = '{} ({}) atom is not parameterised in the selected force field.'.format(atom.element,
                                                                                                  atom.res_label)
+            if w_str:
                 warnings.warn(w_str, NotParameterisedWarning)
-                continue
             atom._ff_id = a_ff_id
         self.tags['assigned_ff'] = True
         return
 
-    def get_internal_energy(self, assign_ff=True, ff=None, haff=False, force_ff_assign=False, threshold=1.1):
+    def update_ff(self, ff, mol2=False, force_ff_assign=False):
+        """Manages assigning the force field parameters.
+
+        The aim of this method is to avoid unnecessary assignment of the
+        force field.
+
+        Parameters
+        ----------
+        ff: BuffForceField
+            The force field to be used for scoring.
+        mol2: bool
+            If true, mol2 style labels will also be used.
+        force_ff_assign: bool
+            If true, the force field will be completely reassigned, ignoring the
+            cached parameters.
+        """
+        aff = False
+        if force_ff_assign:
+            aff = True
+        elif 'assigned_ff' not in self.tags:
+            aff = True
+        elif not self.tags['assigned_ff']:
+            aff = True
+        if aff:
+            self.assign_force_field(ff, mol2=mol2)
+        return
+
+    def get_internal_energy(self, assign_ff=True, ff=None, mol2=False, force_ff_assign=False, threshold=1.1):
+        """Calculates the internal energy of the AMPAL object.
+
+        This method is assigned to the buff_internal_energy property,
+        using the default arguments.
+
+        Parameters
+        ----------
+        assign_ff: bool
+            If true the force field will be updated if required.
+        ff: BuffForceField
+            The force field to be used for scoring.
+        mol2: bool
+            If true, mol2 style labels will also be used.
+        force_ff_assign: bool
+            If true, the force field will be completely reassigned, ignoring the
+            cached parameters.
+        threshold: float
+            Cutoff distance for assigning interactions that are covalent bonds.
+
+        Returns
+        -------
+        BUFF_score: BUFFScore
+            A BUFFScore object with information about each of the interactions and
+            the atoms involved.
+        """
         if not ff:
             ff = global_settings['buff']['force_field']
         if assign_ff:
-            if ('assigned_ff' not in self.tags) or force_ff_assign:
-                self.assign_force_field(ff, mol2=haff)
+            self.update_ff(ff, mol2=mol2, force_ff_assign=force_ff_assign)
         return score_ampal(self, ff, threshold=threshold, internal=True)
 
     buff_internal_energy = property(get_internal_energy)
@@ -288,7 +352,7 @@ class Polymer(BaseAmpal):
             monomers = self._monomers
         return iter(monomers)
 
-    def get_atoms(self, ligands=True, inc_alt_states=False):
+    def get_atoms(self, ligands=True, inc_alt_states=False,ignore_hydrogens=False):
         """Flat list of all the Atoms in the Polymer.
 
         Parameters
@@ -307,10 +371,10 @@ class Polymer(BaseAmpal):
             monomers = self._monomers + self.ligands._monomers
         else:
             monomers = self._monomers
-        atoms = itertools.chain(*(list(m.get_atoms(inc_alt_states=inc_alt_states)) for m in monomers))
+        atoms = itertools.chain(*(list(m.get_atoms(inc_alt_states=inc_alt_states,ignore_hydrogens=ignore_hydrogens)) for m in monomers))
         return atoms
 
-    def relabel_monomers(self, labels=None):
+    def relabel_monomers(self, labels=None, start=None):
         """Relabels the component Monomers either in numerical order or using a list of labels.
 
         Parameters
@@ -318,18 +382,36 @@ class Polymer(BaseAmpal):
         labels : list
             A list of new labels.
 
+        start : int
+            New starting value for the monomers. Used for relabelling chains from a particular residue number.
+
         Raises
         ------
         ValueError
             Raised if the number of labels does not match the number of component Monoer objects.
+        ValueError
+            Raised if labels and start are both set
+        ValueError
+            Raised if start is not an integer
+
         """
-        if labels:
+        if labels and start:
+            raise ValueError('Cannot use both labels= and start=')
+
+        elif labels:
             if len(self._monomers) == len(labels):
                 for monomer, label in zip(self._monomers, labels):
                     monomer.id = str(label)
             else:
                 raise ValueError('Number of Monomers ({}) and number of labels ({}) must be equal.'.format(
                     len(self._monomers), len(labels)))
+        elif start:
+
+            if type(start) != int:
+                raise ValueError('Start value is not an integer')
+            for i, monomer in enumerate(self._monomers):
+                monomer.id = str((start-1)+i+1)
+
         else:
             for i, monomer in enumerate(self._monomers):
                 monomer.id = str(i + 1)
@@ -454,9 +536,15 @@ class Monomer(BaseAmpal):
     def get_monomers(self):
         return [self]
 
-    def get_atoms(self, inc_alt_states=False):
+    def get_atoms(self, inc_alt_states=False, ignore_hydrogens=False):
         if inc_alt_states:
-            return itertools.chain(*[x[1].values() for x in sorted(list(self.states.items()))])
+            if ignore_hydrogens:
+                return itertools.chain(*[x[1].values() for x in sorted(list(self.states.items())) if x.element != "H"])
+            else:
+                return itertools.chain(*[x[1].values() for x in sorted(list(self.states.items()))])
+        elif ignore_hydrogens:
+            return itertools.chain([x for x in self.atoms.values() if x.element != "H"])
+
         else:
             return self.atoms.values()
 

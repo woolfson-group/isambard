@@ -3,7 +3,7 @@ from collections import OrderedDict
 import warnings
 
 from ampal.assembly import Assembly
-from ampal.base_ampal import Polymer, Monomer, Atom, centre_of_atoms
+from ampal.base_ampal import Polymer, Monomer, Atom, centre_of_atoms, radius_of_gyration
 from ampal.interactions import find_covalent_bonds, generate_covalent_bond_graph, \
     generate_bond_subgraphs_from_break
 from ampal.ligands import Ligand, LigandGroup
@@ -18,7 +18,7 @@ from external_programs.scwrl import pack_sidechains
 from settings import global_settings
 from tools.amino_acids import get_aa_code, get_aa_letter, ideal_backbone_bond_lengths, ideal_backbone_bond_angles
 from tools.components import side_chain_centre_atoms
-from tools.geometry import Quaternion, unit_vector, dihedral, find_transformations, distance,\
+from tools.geometry import Quaternion, unit_vector, dihedral, find_transformations, distance, \
     angle_between_vectors
 from tools.isambard_warnings import MalformedPDBWarning
 
@@ -379,6 +379,10 @@ class Polypeptide(Polymer):
         )
         return bond_angles
 
+    def radius_of_gyration(self):
+        """Returns the radius of gyration of the non-hydrogen atoms in the Assembly"""
+        return radius_of_gyration(self.get_atoms(ignore_hydrogens=True))
+
     def c_join(self, other, psi=-40.76, omega=-178.25, phi=-65.07, o_c_n_angle=None, c_n_ca_angle=None, c_n_length=None,
                relabel=True):
         """ Joins other to self at the C-terminus via a peptide bond.
@@ -464,6 +468,7 @@ class Polypeptide(Polymer):
         self.extend(other)
         if relabel:
             self.relabel_all()
+        self.tags['assigned_ff'] = False
         return
 
     def n_join(self, other, psi=-40.76, omega=-178.25, phi=-65.07, o_c_n_angle=None, c_n_ca_angle=None, c_n_length=None,
@@ -551,6 +556,7 @@ class Polypeptide(Polymer):
         self._monomers = other._monomers + self._monomers
         if relabel:
             self.relabel_all()
+        self.tags['assigned_ff'] = False
         return
 
     def tag_secondary_structure(self, force=False):
@@ -808,6 +814,7 @@ class Polypeptide(Polymer):
             else:
                 acetate.rotate(ref_angle-start_angle, axis=acetate['C']._vector-acetate['CA']._vector,
                            point=acetate['C']._vector)
+            acetate['OXT'].ampal_parent = self._monomers[-1]
             self._monomers[-1].atoms['OXT'] = acetate['OXT']
             diff = acetate['O']._vector - self._monomers[-1]['O']._vector
             self._monomers[-1]['O']._vector += diff
@@ -840,6 +847,7 @@ class Polypeptide(Polymer):
             self.ligands.append(Ligand(OrderedDict(NH2 = acetamide['NH2']), mol_code='NH2'))
         else:
             pass
+        self.tags['assigned_ff'] = False
         return
 
     def n_cap(self, n_cap='acetyl', cap_dihedral=None):
@@ -885,6 +893,7 @@ class Polypeptide(Polymer):
             self.ligands.append(Ligand(acetamide, mol_code='ACM'))
         else:
             pass  # just in case we want to build different caps in later
+        self.tags['assigned_ff'] = False
         return
 
 
