@@ -142,6 +142,8 @@ def loop_move(polypeptide, target_monomers, loop_length, rounds, t=297.0,
         current_tas = starting_tas[:]
         best_tas = current_tas
     target_tas = [list(x.tags['tas']) for x in target_monomers]
+    if None in target_tas[0]:
+        raise ValueError("All torsion angles must be present in first residue.\n")
     if starting_rmsd:
         current_rmsd = starting_rmsd
         best_rmsd = starting_rmsd

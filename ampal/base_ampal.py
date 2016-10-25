@@ -137,7 +137,16 @@ class BaseAmpal(object):
     def make_pdb(self):
         raise NotImplementedError
 
-    def assign_force_field(self, ff, haff=False):
+    def assign_force_field(self, ff, mol2=False):
+        """Assigns force field parameters to Atoms in the AMPAL object.
+
+        Parameters
+        ----------
+        ff: BuffForceField
+            The force field to be used for scoring.
+        mol2: bool
+            If true, mol2 style labels will also be used.
+        """
         if hasattr(self, 'ligands'):
             atoms = self.get_atoms(ligands=True, inc_alt_states=True)
         else:
@@ -146,14 +155,13 @@ class BaseAmpal(object):
             if atom.element == 'H':
                 continue
             elif atom.ampal_parent.mol_code in ff:
-                if atom.res_label in ff['WLD']:
-                    a_ff = ff['WLD'][atom.res_label]
-                else:
-                    a_ff = ff[atom.ampal_parent.mol_code][atom.res_label]
-            elif haff and (atom.ampal_parent.mol_code.capitalize() in ff['HAFF']):
-                a_ff = ff['HAFF'][atom.res_label.capitalize()]
+                a_ff_id = (atom.ampal_parent.mol_code, atom.res_label)
+            elif atom.res_label in ff['WLD']:
+                a_ff_id = ('WLD', atom.res_label)
+            elif mol2 and (atom.ampal_parent.mol_code.capitalize() in ff['MOL2']):
+                a_ff_id = ('MOL2', atom.res_label.capitalize())
             else:
-                if not haff:
+                if not mol2:
                     w_str = '{} ({}) atom is not parameterised in the selected residue force field. ' \
                             'Try activating the heavy atom force field (haff).'.format(atom.element, atom.res_label)
                 else:
@@ -161,16 +169,16 @@ class BaseAmpal(object):
                                                                                                  atom.res_label)
                 warnings.warn(w_str, NotParameterisedWarning)
                 continue
-            atom.tags['ff_params'] = PyAtomData(atom.res_label.encode(), a_ff[0].encode(), *a_ff[1:])
+            atom._ff_id = a_ff_id
         self.tags['assigned_ff'] = True
         return
 
     def get_internal_energy(self, assign_ff=True, ff=None, haff=False, force_ff_assign=False, threshold=1.1):
         if not ff:
-            ff = BuffForceField(force_field='standard')
+            ff = global_settings['buff']['force_field']
         if assign_ff:
             if ('assigned_ff' not in self.tags) or force_ff_assign:
-                self.assign_force_field(ff, haff=haff)
+                self.assign_force_field(ff, mol2=haff)
         return score_ampal(self, ff, threshold=threshold, internal=True)
 
     buff_internal_energy = property(get_internal_energy)
@@ -596,6 +604,7 @@ class Atom(object):
             'charge': charge,
             'state': state
         }
+        self._ff_id = None
 
     def __repr__(self):
         return "<{} Atom{}. Coordinates: ({:.3f}, {:.3f}, {:.3f})>".format(
