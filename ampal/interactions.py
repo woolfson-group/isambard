@@ -79,6 +79,54 @@ class NonCovalentInteraction(Interaction):
             self.donor.mol_code, self.donor.id, self.donor.ampal_parent.id, self.acceptor.mol_code, self.acceptor.id,
             self.acceptor.ampal_parent.id)
 
+class C5HydrogenBond(Interaction):
+    def __init__(self,a,b,dist):
+        super().__init__(a,b,dist)
+
+    @property
+    def donor(self):
+        return self._a.ampal_parent
+
+    @property
+    def acceptor(self):
+        return self._b.ampal_parent
+
+    def __repr__(self):
+        am = self._a.ampal_parent
+        ac = am.ampal_parent
+        bm = self._b.ampal_parent
+        bc = bm.ampal_parent
+
+        return '<C5 Hydrogen bond in residue {}-{}-{}>'.format(ac.id,am.mol_code,am.id)
+
+    @property
+    def distance(self):
+        return distance(self._a,self._b)
+
+    @property
+    def phi(self):
+
+        am = self._a.ampal_parent
+        ac = am.ampal_parent
+        bm = self._b.ampal_parent
+        bc = bm.ampal_parent
+
+        if not 'phi' in am.tags:
+            ac.tag_torsion_angles()
+        return am.tags['phi']
+
+    @property
+    def psi(self):
+
+        am = self._a.ampal_parent
+        ac = am.ampal_parent
+        bm = self._b.ampal_parent
+        bc = bm.ampal_parent
+
+        if not 'psi' in am.tags:
+            ac.tag_torsion_angles()
+        return am.tags['psi']
+
 
 class HydrogenBond(NonCovalentInteraction):
     """Defines a hydrogen bond in terms of a donor and an acceptor."""
@@ -634,7 +682,6 @@ class CH_pi(PiBase):
                       'angle': self.angle,
                       'proj_distance': self.proj_dist}
 
-
 def covalent_bonds(atoms, threshold=1.1):
     bonds = []
     for a, b in atoms:
@@ -852,6 +899,36 @@ def C_hydrogen_bonds(atoms, dist_range=(1.5, 2.7), angular_cutoff=90.0):
             chbond = CHydrogenBond(da, aa, dist, dba, baa)
             chbonds.append(chbond)
     return chbonds
+
+def find_C5HydrogenBonds(ampal,dist_range=(1.5,2.61),phi=140,psi=140):
+    """Returns a list of C5 hydrogen bonds found in the input structure involving
+    the 20 proteinogenic amino acids. Parameters taken from Newberry & Raines, Nat Chem Bio 2016
+
+    Parameters
+    ----------
+    ampal : BaseAmpal or subclass
+        AMPAL object to be analysed.
+    dist_range : (float,float)
+        Minimum and maximum distance for interaction
+    phi : int
+        Max absolute phi angle
+    psi : int
+        Max absolute psi angle
+
+    Returns
+    -------
+    c5_hbonds : list
+        List of C5 hydrogen bonds
+
+    """
+    c5_hbonds = []
+    potential_c5s = [C5HydrogenBond(x['N'],x['C'],distance(x['N'],x['C'])) for x in ampal.get_monomers(ligands=False)]
+    for c in potential_c5s:
+        if c.phi and c.psi:
+            if c.distance > dist_range[0] and c.distance < dist_range[1] and abs(c.phi) > phi and abs(c.psi) > psi:
+                c5_hbonds.append(c)
+    return c5_hbonds
+
 # This should be expanded to a dictionary with values for each hbond pair
 # check figure 1 in Gail's latest ProSci paper
 def find_hydrogen_bonds(ampal, dist_range=(1.5, 2.7), angular_cutoff=90.0, water_donors=True):
