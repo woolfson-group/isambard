@@ -100,5 +100,19 @@ class PiPiInteractionFinderTestCase(unittest.TestCase):
         face,edge = isambard.ampal.interactions.find_pi_pi_interactions(test_pdb)
         self.assertEqual(len(edge),2)
 
+class C5HydrogenBondFinderTestCase(unittest.TestCase):
+
+    def test_3qy1(self):
+        test_path = os.path.join(os.path.dirname(isambard.__file__), 'unit_tests', 'testing_files', '3qy1.pdb')
+        test_pdb = isambard.ampal.convert_pdb_to_ampal(test_path)
+        c5hb = isambard.ampal.interactions.find_C5HydrogenBonds(test_pdb)
+        self.assertEqual(len(c5hb),10)
+
+    def test_1ek9(self):
+        test_path = os.path.join(os.path.dirname(isambard.__file__), 'unit_tests', 'testing_files', '1ek9.pdb')
+        test_pdb = isambard.ampal.convert_pdb_to_ampal(test_path)
+        c5hb = isambard.ampal.interactions.find_C5HydrogenBonds(test_pdb)
+        self.assertEqual(len(c5hb),44)
+        
 if __name__ == '__main__':
     unittest.main()
