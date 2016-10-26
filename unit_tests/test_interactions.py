@@ -113,6 +113,6 @@ class C5HydrogenBondFinderTestCase(unittest.TestCase):
         test_pdb = isambard.ampal.convert_pdb_to_ampal(test_path)
         c5hb = isambard.ampal.interactions.find_C5HydrogenBonds(test_pdb)
         self.assertEqual(len(c5hb),44)
-        
+
 if __name__ == '__main__':
     unittest.main()
