@@ -12,8 +12,7 @@ try:
     from settings import global_settings
     import add_ons
     import ampal
-    from ampal import secondary_structure
-    from ampal import specifications
+    import ampal.specifications as specifications
     from ampal import analyse_protein
     from ampal import interactions
     import buff
