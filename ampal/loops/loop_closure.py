@@ -5,7 +5,7 @@ import math
 import random
 import sys
 
-from ampal.secondary_structure.ta_polypeptide import TAPolypeptide
+from ampal.specifications.polymer_specs.ta_polypeptide import TAPolypeptide
 from tools.geometry import distance
 
 
