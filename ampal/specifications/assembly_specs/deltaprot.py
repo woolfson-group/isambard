@@ -2,7 +2,7 @@ import numpy
 
 # import the relevant secondary structure
 from ampal.assembly import Assembly
-from ampal.secondary_structure.helix import Helix
+from ampal.specifications.polymer_specs.helix import Helix
 from tools.geometry import dihedral
 
 
