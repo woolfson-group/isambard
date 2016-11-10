@@ -6,7 +6,6 @@ from networkx.generators import cycle_graph, complete_graph
 
 import isambard_dev as isambard
 
-
 class IsomorphismCheckerTestCase(unittest.TestCase):
     """Tests for isambard.tools.graph_theory.isomorphism_checker"""
 

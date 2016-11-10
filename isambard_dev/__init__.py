@@ -1,8 +1,9 @@
-import inspect as _inspect
 import os as _os
-import subprocess as _subprocess
 import sys as _sys
-import pyximport; pyximport.install()
+
+import pyximport;
+
+pyximport.install()
 
 _sys.path.append('')
 _starting_dir = _os.getcwd()
@@ -21,11 +22,10 @@ try:
     import buff
     import external_programs
     import tools
-    import tools.graph_theory
-    import tools.statistics
     import tools.geometry as geometry
     import optimisation
     import databases
+
     with open('logo.txt', 'r') as inf:
         logo = ''.join(inf.readlines()[:51])
 finally:
