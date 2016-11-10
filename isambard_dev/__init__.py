@@ -6,14 +6,13 @@ import pyximport; pyximport.install()
 
 _sys.path.append('')
 _starting_dir = _os.getcwd()
-_cmd_folder = _os.path.realpath(_os.path.abspath(_os.path.split(_inspect.getfile(_inspect.currentframe()))[0]))
+_cmd_folder = _os.path.dirname(_os.path.abspath(__file__))
 _os.chdir(_cmd_folder)
 
+
 try:
-    if 'settings.json' not in _os.listdir(_cmd_folder):
-        print('No configuration file (settings.json) found in {}.\nRunning configure.py...\n'.format(_cmd_folder))
-        _subprocess.call(['python', 'configure.py'])
     from settings import global_settings
+    import settings
     import add_ons
     import ampal
     import ampal.specifications as specifications
