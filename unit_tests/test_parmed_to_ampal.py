@@ -1,5 +1,6 @@
-import unittest
 import os
+import unittest
+
 import parmed
 
 import isambard_dev as isambard
@@ -8,7 +9,7 @@ import isambard_dev as isambard
 class ParmedToAmpalTestCase(unittest.TestCase):
     """ tests for isambard.add_ons.parmed_to_ampal"""
     def setUp(self):
-        test_files = [os.path.join(os.path.dirname(isambard.__file__), 'unit_tests', 'testing_files', x)
+        test_files = [os.path.join('unit_tests', 'testing_files', x)
                       for x in ['1ek9.pdb', '2ht0.pdb', '3qy1.pdb']]
         self.test_ampals = [isambard.ampal.convert_pdb_to_ampal(x) for x in test_files]
         test_parmeds = [parmed.formats.PDBFile.parse(x, skip_bonds=True) for x in test_files]

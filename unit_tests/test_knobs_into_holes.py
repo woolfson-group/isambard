@@ -7,7 +7,7 @@ import isambard_dev as isambard
 class KnobGroupTestCase(unittest.TestCase):
     """Tests for class KnobGroup"""
     def setUp(self):
-        test_file = os.path.join(os.path.dirname(isambard.__file__), 'unit_tests', 'testing_files', '2ebo_1.mmol')
+        test_file = os.path.join('unit_tests', 'testing_files', '2ebo_1.mmol')
         self.test_assembly = isambard.ampal.convert_pdb_to_ampal(test_file)
 
     def test_number_of_kihs(self):

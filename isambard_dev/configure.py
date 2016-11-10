@@ -60,8 +60,8 @@ def base_install():
     scwrl = {}
     print('{BOLD}{HEADER}Generating configuration files for ISAMBARD.{END_C}\n'
           'All required input can use tab completion for paths.\n'
-          '{BOLD}Setting up SCWRL 4.0 (Required){END_C}'.format(**text_colours))
-    scwrl_path = get_user_path('Please provide a path to your SCWRL executable')
+          '{BOLD}Setting up SCWRL 4.0 (Recommended){END_C}'.format(**text_colours))
+    scwrl_path = get_user_path('Please provide a path to your SCWRL executable', required=False)
     scwrl['path'] = str(scwrl_path)
     pack_mode = get_user_option(
         'Please choose your packing mode (flexible is significantly slower but is more accurate).',
@@ -107,7 +107,7 @@ def optional_install():
     settings['bude'] = bude
 
     # reduce
-    print('{BOLD}Setting up Reduce (used to find non-covalent interactions){END_C}'.format(**text_colours))
+    print('{BOLD}Setting up Reduce (optional){END_C}'.format(**text_colours))
     reduce = {}
     reduce_path = get_user_path('Please provide a path to your reduce executable.', required=False)
     reduce['path'] = str(reduce_path)
