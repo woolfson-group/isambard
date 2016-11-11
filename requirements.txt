@@ -12,3 +12,4 @@ parmed
 scipy
 recommonmark
 numpydoc
+pypandoc
