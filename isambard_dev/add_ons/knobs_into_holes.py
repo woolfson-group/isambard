@@ -254,7 +254,7 @@ class KnobGroup(PseudoGroup):
         cluster_dict = cluster_helices(helices, cluster_distance=(cutoff + 10))
         for k, v in cluster_dict.items():
             if len(v) > 1:
-                kihs = find_kihs(helices, cutoff=cutoff, hole_size=4, gen_segs=gen_segs)
+                kihs = find_kihs(v, cutoff=cutoff, hole_size=4, gen_segs=gen_segs)
                 if len(kihs) == 0:
                     continue
                 for x in kihs:
