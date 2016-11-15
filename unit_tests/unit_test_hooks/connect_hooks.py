@@ -1,8 +1,6 @@
 import shutil
 import os
 
-from isambard_dev.settings import global_settings
-
 
 def main(args):
     hooks_dir = os.path.join('.git', 'hooks')

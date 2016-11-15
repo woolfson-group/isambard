@@ -1,6 +1,6 @@
 #ISAMBARD
 ###Intelligent System for Analysis, Model Building And Rational Design of proteins.
-#### Version 1.0.3 (Nov 11, 2016), Woolfson Group, University of Bristol.
+#### Version 1.0.4 (Nov 15, 2016), Woolfson Group, University of Bristol.
 [![CircleCI](https://circleci.com/gh/woolfson-group/isambard_dev.svg?style=shield&circle-token=0af7a4c0efd449fda7db2d1deef2745b8d289dcf)](https://circleci.com/gh/woolfson-group/isambard_dev)
 [![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg?maxAge=2592000)](https://gitter.im/woolfson-group/isambard?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/woolfson-group/isambard/blob/master/LICENSE.md)
@@ -8,6 +8,9 @@
 ## Recent Changes
 
 #### v1.0
+
+##### v1.0.4
+* knobs_into_holes.KnobGroup.from_helices now works as expected with large cutoff values. Testing added accordingly.
 
 ##### v1.0.3
 * The `settings.json` file is no more!
