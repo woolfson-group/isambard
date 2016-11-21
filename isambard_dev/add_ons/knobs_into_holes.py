@@ -332,7 +332,7 @@ class KnobGroup(PseudoGroup):
         return g
 
     def daisy_chains(self, kih, max_path_length=None):
-        """ Finds list of daisy chains (complementary kihs) associated with a knob.
+        """ Generator for daisy chains (complementary kihs) associated with a knob.
 
         Notes
         -----
@@ -353,7 +353,7 @@ class KnobGroup(PseudoGroup):
         if max_path_length is None:
             max_path_length = len(self.ampal_parent)
         g = self.daisy_chain_graph
-        paths = list(networkx.all_simple_paths(g, source=kih.knob, target=kih.knob, cutoff=max_path_length))
+        paths = networkx.all_simple_paths(g, source=kih.knob, target=kih.knob, cutoff=max_path_length)
         return paths
 
     def get_assigned_regions(self, helices=None, include_alt_states=False, complementary_only=False, cutoff=None):
@@ -499,8 +499,7 @@ class KnobIntoHole(PseudoMonomer):
                 return complementary
             else:
                 knob_group = knob_group.knob_subgroup(cutoff=cutoff)
-        daisy_chains = knob_group.daisy_chains(kih=self)
-        complementary = True if len(daisy_chains) > 0 else False
+        complementary = True if next(knob_group.daisy_chains(kih=self), None) is not None else False
         return complementary
 
     def knob_type(self, cutoff=None, insertion_cutoff=7.0):
