@@ -1,6 +1,6 @@
 #ISAMBARD
 ###Intelligent System for Analysis, Model Building And Rational Design of proteins.
-#### Version 1.0.4 (Nov 15, 2016), Woolfson Group, University of Bristol.
+#### Version 1.1.0 (Nov 22, 2016), Woolfson Group, University of Bristol.
 [![CircleCI](https://circleci.com/gh/woolfson-group/isambard_dev.svg?style=shield&circle-token=0af7a4c0efd449fda7db2d1deef2745b8d289dcf)](https://circleci.com/gh/woolfson-group/isambard_dev)
 [![codecov](https://codecov.io/gh/woolfson-group/isambard_dev/branch/master/graph/badge.svg?token=UEzouOJSdl)](https://codecov.io/gh/woolfson-group/isambard_dev)
 [![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg?maxAge=2592000)](https://gitter.im/woolfson-group/isambard?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
@@ -8,24 +8,23 @@
 
 ## Recent Changes
 
+#### v1.1
+
+##### v1.1.0
+
+* Reworked internals of BUFF to find interactions in a more general way
+    * Now has a `score_inter_ampal` function in `isambard.buff` that allows interaction energy to be measured between multiple AMPAL
+
 #### v1.0
 
-##### v1.0.4
+##### v1.0.0 - 1.0.4
 * knobs_into_holes.KnobGroup.from_helices now works as expected with large cutoff values. Testing added accordingly.
-
-##### v1.0.3
 * The `settings.json` file is no more!
     * It has been replaced with `.isambard_settings` which is written to the users home directory
-
-##### v1.0.2
 * Added files for managing the install using pip or `setup.py`
     * Can now download and run `python setup.py install` in the `isambard_dev` file to install to your python packages
-
-##### v1.0.1
 * Added checks for external program availability
     * Will now raise a `DependencyNotFoundWarning` if a function that requires an external program is called without that dependency being available
-
-##### v1.0.0
 * Release API structure
     * All parametric model building is now in the specifications folder under either assembly_specs or polymer_specs
     * From this point out, the version number in the development branch will follow full [semantic versioning](http://semver.org/)
