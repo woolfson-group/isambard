@@ -1,3 +1,4 @@
 from ampal.specifications.assembly_specs.solenoid import HelixPair, Solenoid
 from ampal.specifications.assembly_specs.coiledcoil import CoiledCoil
 from ampal.specifications.assembly_specs.nucleic_acid_duplex import DNADuplex
+from ampal.specifications.assembly_specs.membrane_4hb import Membrane4HelixBundle
