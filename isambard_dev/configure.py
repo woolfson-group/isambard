@@ -18,6 +18,8 @@ text_colours = {
 }
 
 isambard_path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+home_dir = pathlib.Path(os.path.expanduser('~'))
+settings_file_name = '.isambard_settings'
 
 settings = {}
 
@@ -28,7 +30,7 @@ def main(args):
     readline.parse_and_bind("tab: complete")
     readline.set_completer(complete)
 
-    settings_path = isambard_path / 'settings.json'
+    settings_path = home_dir / settings_file_name
     if args.circleci:
         install_for_circleci(settings_path)
         return
@@ -50,6 +52,7 @@ def install(settings_path, basic=False):
     if not basic:
         optional_install()
     with open(str(settings_path), 'w') as outf:
+        print("Writing settings file to '{}'".format(settings_path))
         outf.write(json.dumps(settings, sort_keys=True, indent=4, separators=(',', ':')))
     return
 
@@ -60,8 +63,8 @@ def base_install():
     scwrl = {}
     print('{BOLD}{HEADER}Generating configuration files for ISAMBARD.{END_C}\n'
           'All required input can use tab completion for paths.\n'
-          '{BOLD}Setting up SCWRL 4.0 (Required){END_C}'.format(**text_colours))
-    scwrl_path = get_user_path('Please provide a path to your SCWRL executable')
+          '{BOLD}Setting up SCWRL 4.0 (Recommended){END_C}'.format(**text_colours))
+    scwrl_path = get_user_path('Please provide a path to your SCWRL executable', required=False)
     scwrl['path'] = str(scwrl_path)
     pack_mode = get_user_option(
         'Please choose your packing mode (flexible is significantly slower but is more accurate).',
@@ -107,7 +110,7 @@ def optional_install():
     settings['bude'] = bude
 
     # reduce
-    print('{BOLD}Setting up Reduce (used to find non-covalent interactions){END_C}'.format(**text_colours))
+    print('{BOLD}Setting up Reduce (optional){END_C}'.format(**text_colours))
     reduce = {}
     reduce_path = get_user_path('Please provide a path to your reduce executable.', required=False)
     reduce['path'] = str(reduce_path)
@@ -146,18 +149,12 @@ def optional_install():
 
 def install_for_circleci(settings_path):
     cci_settings = {
-        "bude": {"cmd_files": "",
-                 "internal_energy_binary": ""},
         "buff": {"default_force_field": "standard"},
-        "dssp": {"path": "/home/ubuntu/isambard_dev/dssp-2.0.4"},
-        "interactions_database": {"folder": ""},
-        "naccess": {"path": ""},
-        "profit": {"path": ""},
-        "reduce": {"folder": "/home/ubuntu/isambard_dev",
-                   "path": "/home/ubuntu/isambard_dev/reduce.3.23.130521.linuxi386"},
+        "dssp": {"path": "/home/ubuntu/isambard_dev/dependencies_for_isambard/dssp/dssp-2.0.4"},
+        "reduce": {"folder": "/home/ubuntu/isambard_dev/dependencies_for_isambard/reduce",
+                   "path": "/home/ubuntu/isambard_dev/dependencies_for_isambard/reduce/reduce.3.23.130521.linuxi386"},
         "scwrl": {"path": "/home/ubuntu/isambard_dev/Scwrl4",
-                  "rigid_rotamer_model": True},
-        "structural_database": {"path": ""}
+                  "rigid_rotamer_model": True}
         }
     with open(str(settings_path), 'w') as outf:
         outf.write(json.dumps(cci_settings, sort_keys=True, indent=4, separators=(',', ':')))
@@ -182,6 +179,10 @@ def get_user_path(input_messege, required=True):
             good_path = True
         except FileNotFoundError:
             print('{WARNING}Path does not exist.{END_C}'.format(**text_colours))
+            force_continue = get_user_option('Use this path anyway?', ['Yes', 'No'])
+            if force_continue:
+                path = ui_path
+                good_path = True
     print('Path set to "{}"'.format(str(path)))
     return path
 

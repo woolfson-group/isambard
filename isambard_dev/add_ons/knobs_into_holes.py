@@ -254,7 +254,7 @@ class KnobGroup(PseudoGroup):
         cluster_dict = cluster_helices(helices, cluster_distance=(cutoff + 10))
         for k, v in cluster_dict.items():
             if len(v) > 1:
-                kihs = find_kihs(helices, cutoff=cutoff, hole_size=4, gen_segs=gen_segs)
+                kihs = find_kihs(v, cutoff=cutoff, hole_size=4, gen_segs=gen_segs)
                 if len(kihs) == 0:
                     continue
                 for x in kihs:
@@ -332,7 +332,7 @@ class KnobGroup(PseudoGroup):
         return g
 
     def daisy_chains(self, kih, max_path_length=None):
-        """ Finds list of daisy chains (complementary kihs) associated with a knob.
+        """ Generator for daisy chains (complementary kihs) associated with a knob.
 
         Notes
         -----
@@ -353,7 +353,7 @@ class KnobGroup(PseudoGroup):
         if max_path_length is None:
             max_path_length = len(self.ampal_parent)
         g = self.daisy_chain_graph
-        paths = list(networkx.all_simple_paths(g, source=kih.knob, target=kih.knob, cutoff=max_path_length))
+        paths = networkx.all_simple_paths(g, source=kih.knob, target=kih.knob, cutoff=max_path_length)
         return paths
 
     def get_assigned_regions(self, helices=None, include_alt_states=False, complementary_only=False, cutoff=None):
@@ -499,8 +499,7 @@ class KnobIntoHole(PseudoMonomer):
                 return complementary
             else:
                 knob_group = knob_group.knob_subgroup(cutoff=cutoff)
-        daisy_chains = knob_group.daisy_chains(kih=self)
-        complementary = True if len(daisy_chains) > 0 else False
+        complementary = True if next(knob_group.daisy_chains(kih=self), None) is not None else False
         return complementary
 
     def knob_type(self, cutoff=None, insertion_cutoff=7.0):

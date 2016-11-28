@@ -5,7 +5,7 @@ from ampal.base_ampal import BaseAmpal, Polymer, find_atoms_within_distance, cen
 from ampal.ligands import LigandGroup, Ligand
 from ampal.analyse_protein import sequence_molecular_weight, sequence_molar_extinction_280, \
     sequence_isoelectric_point
-from buff import score_ampal
+from buff import find_intra_ampal, find_inter_ampal, score_interactions
 from external_programs.scwrl import pack_sidechains
 from external_programs.naccess import run_naccess,extract_residue_accessibility
 from settings import global_settings
@@ -397,7 +397,7 @@ class Assembly(BaseAmpal):
                     fasta_str += '{0}\n'.format(seq_part)
         return fasta_str
 
-    def get_interaction_energy(self, assign_ff=True, ff=None, mol2=False, force_ff_assign=False, threshold=1.1):
+    def get_interaction_energy(self, assign_ff=True, ff=None, mol2=False, force_ff_assign=False):
         """Calculates the interaction energy of the AMPAL object.
 
         This method is assigned to the buff_interaction_energy property,
@@ -414,12 +414,10 @@ class Assembly(BaseAmpal):
         force_ff_assign: bool
             If true, the force field will be completely reassigned, ignoring the
             cached parameters.
-        threshold: float
-            Cutoff distance for assigning interactions that are covalent bonds.
 
         Returns
         -------
-        BUFF_score: BUFFScore
+        buff_score: BUFFScore
             A BUFFScore object with information about each of the interactions and
             the atoms involved.
         """
@@ -433,11 +431,13 @@ class Assembly(BaseAmpal):
                     raise AttributeError(
                         'The following molecule does not have a update_ff method:\n{}\n'
                         'If this is a custom molecule type it should inherit from BaseAmpal:'.format(molecule))
-        return score_ampal(self, ff, threshold=threshold)
+        interactions = find_inter_ampal(self, ff.distance_cutoff)
+        buff_score = score_interactions(interactions, ff)
+        return buff_score
 
     buff_interaction_energy = property(get_interaction_energy)
 
-    def get_internal_energy(self, assign_ff=True, ff=None, mol2=False, force_ff_assign=False, threshold=1.1):
+    def get_internal_energy(self, assign_ff=True, ff=None, mol2=False, force_ff_assign=False):
         """Calculates the internal energy of the AMPAL object.
 
         THIS METHOD REIMPLEMENTS THE BaseAmpal VERSION. This is so that
@@ -456,12 +456,10 @@ class Assembly(BaseAmpal):
         force_ff_assign: bool
             If true, the force field will be completely reassigned, ignoring the
             cached parameters.
-        threshold: float
-            Cutoff distance for assigning interactions that are covalent bonds.
 
         Returns
         -------
-        BUFF_score: BUFFScore
+        buff_score: BUFFScore
             A BUFFScore object with information about each of the interactions and
             the atoms involved.
         """
@@ -475,7 +473,9 @@ class Assembly(BaseAmpal):
                     raise AttributeError(
                         'The following molecule does not have a update_ff method:\n{}\n'
                         'If this is a custom molecule type it should inherit from BaseAmpal:'.format(molecule))
-        return score_ampal(self, ff, threshold=threshold, internal=True)
+        interactions = find_intra_ampal(self, ff.distance_cutoff)
+        buff_score = score_interactions(interactions, ff)
+        return buff_score
 
     buff_internal_energy = property(get_internal_energy)
 
@@ -500,7 +500,11 @@ class Assembly(BaseAmpal):
         if total_seq_len != total_aa_len:
             raise ValueError('Total sequence length ({}) does not match total Polymer length ({}).'.format(
                 total_seq_len, total_aa_len))
-        packed_structure, scwrl_score = pack_sidechains(self.backbone.pdb, ''.join(sequences))
+        scwrl_out = pack_sidechains(self.backbone.pdb, ''.join(sequences))
+        if scwrl_out is None:
+            return
+        else:
+            packed_structure, scwrl_score = scwrl_out
         new_assembly = convert_pdb_to_ampal(packed_structure, path=False)
         self._molecules = new_assembly._molecules[:]
         self.assign_force_field(global_settings[u'buff'][u'force_field'])

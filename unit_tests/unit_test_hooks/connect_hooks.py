@@ -1,11 +1,9 @@
 import shutil
 import os
 
-from isambard_dev.settings import global_settings
-
 
 def main(args):
-    hooks_dir = os.path.join(global_settings['package_path'], '.git', 'hooks')
+    hooks_dir = os.path.join('.git', 'hooks')
     if not args.unhook:
         add_hooks(hooks_dir)
         print('Finished: Hooks created, unit tests will now be run before "git commit".')
@@ -16,7 +14,7 @@ def main(args):
 
 
 def add_hooks(dest_path):
-    hook_folder = os.path.join(global_settings['package_path'], 'unit_tests', 'unit_test_hooks')
+    hook_folder = os.path.join('unit_tests', 'unit_test_hooks')
     hook_scripts = [script for script in os.listdir(hook_folder) if script[-3:] != '.py']
     for script in hook_scripts:
         print('Copying "{}" to "{}"'.format(script, dest_path))
@@ -25,7 +23,7 @@ def add_hooks(dest_path):
 
 
 def remove_hooks(dest_path):
-    hook_folder = os.path.join(global_settings['package_path'], 'unit_tests', 'unit_test_hooks')
+    hook_folder = os.path.join('unit_tests', 'unit_test_hooks')
     hook_scripts = [script for script in os.listdir(hook_folder) if script[-3:] != '.py']
     for script in hook_scripts:
         print('Removing "{}" from "{}"'.format(script, dest_path))

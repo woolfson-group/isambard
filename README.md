@@ -1,11 +1,33 @@
 #ISAMBARD
 ###Intelligent System for Analysis, Model Building And Rational Design of proteins.
-#### Version 0.7.2 (Oct 26, 2016), Woolfson Group, University of Bristol.
+#### Version 1.1.0 (Nov 22, 2016), Woolfson Group, University of Bristol.
 [![CircleCI](https://circleci.com/gh/woolfson-group/isambard_dev.svg?style=shield&circle-token=0af7a4c0efd449fda7db2d1deef2745b8d289dcf)](https://circleci.com/gh/woolfson-group/isambard_dev)
+[![codecov](https://codecov.io/gh/woolfson-group/isambard_dev/branch/master/graph/badge.svg?token=UEzouOJSdl)](https://codecov.io/gh/woolfson-group/isambard_dev)
 [![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg?maxAge=2592000)](https://gitter.im/woolfson-group/isambard?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/woolfson-group/isambard/blob/master/LICENSE.md)
 
 ## Recent Changes
+
+#### v1.1
+
+##### v1.1.0
+
+* Reworked internals of BUFF to find interactions in a more general way
+    * Now has a `score_inter_ampal` function in `isambard.buff` that allows interaction energy to be measured between multiple AMPAL
+
+#### v1.0
+
+##### v1.0.0 - 1.0.4
+* knobs_into_holes.KnobGroup.from_helices now works as expected with large cutoff values. Testing added accordingly.
+* The `settings.json` file is no more!
+    * It has been replaced with `.isambard_settings` which is written to the users home directory
+* Added files for managing the install using pip or `setup.py`
+    * Can now download and run `python setup.py install` in the `isambard_dev` file to install to your python packages
+* Added checks for external program availability
+    * Will now raise a `DependencyNotFoundWarning` if a function that requires an external program is called without that dependency being available
+* Release API structure
+    * All parametric model building is now in the specifications folder under either assembly_specs or polymer_specs
+    * From this point out, the version number in the development branch will follow full [semantic versioning](http://semver.org/)
 
 #### v0.7
 
@@ -46,36 +68,6 @@
     * Methionine-aromatic interactions
     * Pi-Pi interactions
     * Hydrogen bonds with C-H group as a donor
-
-#### v0.5.0
-* Added BUDE 2016 Force Field
-    * Currently is not the default force field so must be enabled by editing the `settings.json` file or rerunning `configure.py`
-    * Bug fixes have also been included so that the default force field now works as intended
-
-#### v0.4.0
-* Loop Closure Functionality
-    * Functions for performing kinematic closure of loops have now been added to `isambard.ampal.loops`
-    * This module uses Metropolis Monte Carlo backbone moves to fit a loop between two regions of protein
-    * The major function is `isambard.loops.fit_loop_between`
-* `join` method has now been separated into `n_join` and `c_join`
-* Socket
-    * Socket functionality is now completely replicated using native ISAMBARD code
-    * The Socket external dependency has been removed
-
-#### v0.3.1
-* New PDB Parser
-    * Much more robust
-    * Allows preprocessing of the PDB file
-    * Easy to add filters to the parsering of the PDB and the generation of the AMPAL object
-* Automatic configuration script `configure.py` added
-    * This generates the settings.json file using user information
-    * Use `python configure.py` to run
-    * Add the `-o` flag if you have existing settings you wish to overwrite
-* `settings.json` has a new general format
-* [CircleCI](https://circleci.com/) has been linked to the ISAMBARD repository
-    * This is a tool for [continuous integration](https://en.wikipedia.org/wiki/Continuous_integration)
-    * Whenever changes are pushed to master CircleCI downloads ISAMBARD and runs the unit tests
-    * There is a badge in the `README.md` detailing the current CircleCI status 
 
 [**See full change log**](https://github.com/woolfson-group/isambard_dev/wiki/Change-Log)
 

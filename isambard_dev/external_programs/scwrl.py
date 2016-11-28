@@ -2,8 +2,30 @@ import os
 import subprocess
 import tempfile
 import re
+import warnings
 
 from settings import global_settings
+from tools.isambard_warnings import DependencyNotFoundWarning
+
+
+def check_scwrl_avail():
+    is_scwrl_available = False
+    if os.path.isfile(global_settings['scwrl']['path']):
+        try:
+            subprocess.check_output([global_settings['scwrl']['path']], stderr=subprocess.DEVNULL)
+        except subprocess.CalledProcessError:
+            is_scwrl_available = True
+    else:
+        warning_string = ('\n\nScwrl4 not found and so cannot be used. Check that the path to the Scwrl4 binary'
+                          ' in `settings.json` is correct.\n'
+                          'Suggestion:\n'
+                          'You might want to try running isambard.settings.configure() after importing ISAMBARD in a\n'
+                          'Python interpreter or running `configure.py` in the module folder.')
+        warnings.warn(warning_string, DependencyNotFoundWarning)
+    return is_scwrl_available
+
+
+global_settings['scwrl']['available'] = check_scwrl_avail()
 
 
 def run_scwrl(pdb, sequence, path=True):
@@ -108,6 +130,14 @@ def parse_scwrl_out(scwrl_std_out, scwrl_pdb):
 
 def pack_sidechains(pdb, sequence, path=False):
     """Packs sidechains onto a given PDB file or string."""
+    if global_settings['scwrl']['available'] is None:
+        global_settings['scwrl']['available'] = check_scwrl_avail()
+    if not global_settings['scwrl']['available']:
+        warning_string = ('Scwrl not found, side chains have not been packed.\n'
+                          'Check that the path to the Scwrl binary in `settings.json` is correct.\n'
+                          'You might want to try rerunning `configure.py`')
+        warnings.warn(warning_string, DependencyNotFoundWarning)
+        return
     scwrl_std_out, scwrl_pdb = run_scwrl(pdb, sequence, path=path)
     return parse_scwrl_out(scwrl_std_out, scwrl_pdb)
 
