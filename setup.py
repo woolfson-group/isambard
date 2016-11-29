@@ -17,7 +17,7 @@ setuptools.setup(
     author='Woolfson Group, University of Bristol',
     author_email='isambardinfo@gmail.com',
     url='https://github.com/woolfson-group/isambard_dev/',
-    download_url='https://github.com/woolfson-group/isambard_dev/tarball/1.1.1',
+    download_url='https://github.com/woolfson-group/isambard_dev/tarball/v1.1.1',
     keywords=['isambard', 'biomolecule', 'parametric', 'modelling', 'bristol', 'woolfson'],
     install_requires=[
         'Cython',
