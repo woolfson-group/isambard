@@ -18,6 +18,7 @@ class BaseOptimizer:
         self._params.update(**kwargs)
         creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
         self.toolbox = base.Toolbox()
+        self.parameter_log = []
 
     def parse_individual(self, individual):
         """Converts a deap individual into a full list of parameters for building the specification object.
@@ -182,7 +183,11 @@ class BaseScore(BaseOptimizer):
         else:
             with futures.ProcessPoolExecutor(max_workers=self._params['processors']) as executor:
                 fitnesses = executor.map(buff_eval, px_parameters)
-        for ind, fit in zip(targets, fitnesses):
+        tars_fits = list(zip(targets, fitnesses))
+        if 'log_params' in self._params:
+            if self._params['log_params']:
+                self.parameter_log.append([(self.parse_individual(x[0]), x[1]) for x in tars_fits])
+        for ind, fit in tars_fits:
             ind.fitness.values = (fit,)
 
 
