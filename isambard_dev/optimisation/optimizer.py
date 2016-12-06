@@ -165,6 +165,15 @@ class BaseOptimizer:
             model.pack_new_sequences(self._params['sequence'])
             output_file.write(model.pdb)
 
+    @property
+    def best_model(self):
+        if hasattr(self, 'halloffame'):
+            model = self._params['topology'](*self.parse_individual(self.halloffame[0]))
+            model.pack_new_sequences(self._params['sequence'])
+            return model
+        else:
+            raise NameError('No best model found, have you ran the optimiser?')
+
 
 class BaseScore(BaseOptimizer):
     """
