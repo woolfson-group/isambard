@@ -186,7 +186,7 @@ class BaseScore(BaseOptimizer):
         tars_fits = list(zip(targets, fitnesses))
         if 'log_params' in self._params:
             if self._params['log_params']:
-                self.parameter_log.extend([(self.parse_individual(x[0]), x[1]) for x in tars_fits])
+                self.parameter_log.append([(self.parse_individual(x[0]), x[1]) for x in tars_fits])
         for ind, fit in tars_fits:
             ind.fitness.values = (fit,)
 
