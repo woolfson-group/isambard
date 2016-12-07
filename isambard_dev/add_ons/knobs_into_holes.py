@@ -370,7 +370,7 @@ class KnobGroup(PseudoGroup):
         """
         if helices is None:
             helices = self.ampal_parent
-            kihs = self
+            kihs = self.get_monomers()
         else:
             kihs = [x for x in self.get_monomers() if (x.knob_helix in helices) and (x.hole_helix in helices)]
         if complementary_only:
