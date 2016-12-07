@@ -219,8 +219,6 @@ class KnobGroup(PseudoGroup):
         assembly : Assembly
         cutoff : float
             Socket cutoff in Angstroms
-        segments : bool
-            If True, long helices are split into segments, each of which contatins no long gaps between knob residues.
         min_helix_length : int
             Minimum number of Residues in a helix considered for KIH packing.
 
