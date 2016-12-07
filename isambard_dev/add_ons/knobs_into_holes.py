@@ -259,17 +259,18 @@ class KnobGroup(PseudoGroup):
         if cutoff > self.cutoff:
             raise ValueError("cutoff supplied ({0}) cannot be greater than self.cutoff ({1})".format(cutoff,
                                                                                                      self.cutoff))
-        return KnobGroup(monomers=[x for x in self if x.max_kh_distance <= cutoff], ampal_parent=self.ampal_parent)
+        return KnobGroup(monomers=[x for x in self.get_monomers()
+                                   if x.max_kh_distance <= cutoff], ampal_parent=self.ampal_parent)
 
     @property
     def complementary_knobs(self, cutoff=None):
-        return list(set([x.knob_residue for x in self if x.is_complementary(cutoff=cutoff)]))
+        return list(set([x.knob_residue for x in self.get_monomers() if x.is_complementary(cutoff=cutoff)]))
 
     @property
     def graph(self):
         """ Returns MultiDiGraph from kihs. Nodes are helices and edges are kihs. """
         g = networkx.MultiDiGraph()
-        edge_list = [(x.knob_helix, x.hole_helix, x.id, {'kih': x}) for x in self]
+        edge_list = [(x.knob_helix, x.hole_helix, x.id, {'kih': x}) for x in self.get_monomers()]
         g.add_edges_from(edge_list)
         return g
 
@@ -314,7 +315,7 @@ class KnobGroup(PseudoGroup):
     def daisy_chain_graph(self):
         """ Directed graph with edges from knob residue to each hole residue for each KnobIntoHole in self. """
         g = networkx.DiGraph()
-        for x in self:
+        for x in self.get_monomers():
             for h in x.hole:
                 g.add_edge(x.knob, h)
         return g
@@ -371,7 +372,7 @@ class KnobGroup(PseudoGroup):
             helices = self.ampal_parent
             kihs = self
         else:
-            kihs = [x for x in self if (x.knob_helix in helices) and (x.hole_helix in helices)]
+            kihs = [x for x in self.get_monomers() if (x.knob_helix in helices) and (x.hole_helix in helices)]
         if complementary_only:
             kihs = [x for x in kihs if x.is_complementary(cutoff=cutoff)]
         assigned_regions = {}
