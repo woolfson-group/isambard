@@ -12,7 +12,7 @@ from ampal.ampal_databases import element_data
 from ampal.analyse_protein import polypeptide_vector, crick_angles
 from add_ons.pacc import fit_heptad_register
 from tools.geometry import centre_of_mass, distance, angle_between_vectors, is_acute, find_foot, Axis, \
-    gen_sectors, minimal_distance_between_lines
+    minimal_distance_between_lines
 from tools.graph_theory import sorted_connected_components
 
 
@@ -111,7 +111,7 @@ def cluster_helices(helices, cluster_distance=12.0):
     return cluster_dict
 
 
-def find_kihs(assembly, hole_size=4, cutoff=7.0, gen_segs=False):
+def find_kihs(assembly, hole_size=4, cutoff=7.0):
     """ KnobIntoHoles between residues of different chains in assembly.
 
     Notes
@@ -132,17 +132,7 @@ def find_kihs(assembly, hole_size=4, cutoff=7.0, gen_segs=False):
     kihs : [KnobIntoHole]
     """
     pseudo_group = side_chain_centres(assembly=assembly, masses=False)
-    # If more than 10 chains in the assembly, use gen_sectors to cut down the number of pairs of chains analyse.
-    if (len(pseudo_group) > 10) and gen_segs:
-        pairs = []
-        sectors = gen_sectors(pseudo_group.get_atoms(), box_size=cutoff)
-        for sector in sectors.values():
-            pseudo_group_subset = [x for x in pseudo_group if set(x.get_atoms()).intersection(set(sector))]
-            for x1, x2 in itertools.permutations(pseudo_group_subset, 2):
-                pairs.append((x1, x2))
-        pairs = set(pairs)
-    else:
-        pairs = itertools.permutations(pseudo_group, 2)
+    pairs = itertools.permutations(pseudo_group, 2)
     kihs = []
     for pp_1, pp_2 in pairs:
         for r in pp_1:
@@ -213,7 +203,7 @@ class KnobGroup(PseudoGroup):
             len(self._monomers), 'KnobIntoHole' if len(self._monomers) == 1 else 'KnobsIntoHoles')
 
     @classmethod
-    def from_helices(cls, assembly, cutoff=7.0, min_helix_length=8, gen_segs=False):
+    def from_helices(cls, assembly, cutoff=7.0, min_helix_length=8):
         """ Generate KnobGroup from the helices in the assembly - classic socket functionality.
 
         Notes
@@ -254,7 +244,7 @@ class KnobGroup(PseudoGroup):
         cluster_dict = cluster_helices(helices, cluster_distance=(cutoff + 10))
         for k, v in cluster_dict.items():
             if len(v) > 1:
-                kihs = find_kihs(v, cutoff=cutoff, hole_size=4, gen_segs=gen_segs)
+                kihs = find_kihs(v, cutoff=cutoff, hole_size=4)
                 if len(kihs) == 0:
                     continue
                 for x in kihs:
