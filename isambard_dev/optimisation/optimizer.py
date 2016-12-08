@@ -167,6 +167,18 @@ class BaseOptimizer:
 
     @property
     def best_model(self):
+        """Rebuilds the top scoring model from an optimisation.
+
+        Returns
+        -------
+        model: AMPAL
+            Returns an AMPAL model of the top scoring parameters.
+
+        Raises
+        ------
+        NameError:
+            Raises a name error if the optimiser has not been run.
+        """
         if hasattr(self, 'halloffame'):
             model = self._params['specification'](*self.parse_individual(self.halloffame[0]))
             model.pack_new_sequences(self._params['sequence'])
@@ -200,6 +212,14 @@ class BaseScore(BaseOptimizer):
             ind.fitness.values = (fit,)
 
     def make_energy_funnel_data(self):
+        """Compares models created during the minimisation relates to the best model.
+
+        Returns
+        -------
+        energy_rmsd_gen: [(float, float, int)]
+            A list of triples containing the BUFF score, RMSD to the top model
+            and generation of a model generated during the minimisation.
+        """
         if not self.parameter_log:
             raise AttributeError('No parameter log data to make funnel, have you ran the optimiser?')
         model_cls = self._params['specification']
@@ -210,10 +230,24 @@ class BaseScore(BaseOptimizer):
         sorted_pps = sorted(gen_tagged, key=lambda x: x[1])
         top_result = sorted_pps[0]
         top_result_model = model_cls(*top_result[0])
-        energy_rmsd_pairs = map(self.funnel_rebuild, [(x, top_result_model) for x in sorted_pps[1:]])
-        return list(energy_rmsd_pairs)
+        energy_rmsd_gen = map(self.funnel_rebuild, [(x, top_result_model) for x in sorted_pps[1:]])
+        return list(energy_rmsd_gen)
 
     def funnel_rebuild(self, psg_trm):
+        """Rebuilds a model from a set of parameters and compares it to a reference model.
+
+        Parameters
+        ----------
+        psg_trm: (([float], float, int), AMPAL)
+            A tuple containing the parameters, score and generation for a
+            model as well as a model of the best scoring parameters.
+
+        Returns
+        -------
+        energy_rmsd_gen: (float, float, int)
+            A triple containing the BUFF score, RMSD to the top model
+            and generation of a model generated during the minimisation.
+        """
         param_score_gen, top_result_model = psg_trm
         params, score, gen = param_score_gen
         model = self._params['specification'](*params)
