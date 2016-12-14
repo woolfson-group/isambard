@@ -1,6 +1,6 @@
 #ISAMBARD
 ###Intelligent System for Analysis, Model Building And Rational Design of proteins.
-#### Version 1.1.1 (Nov 29, 2016), Woolfson Group, University of Bristol.
+#### Version 1.1.2 (Dec 14, 2016), Woolfson Group, University of Bristol.
 [![CircleCI](https://circleci.com/gh/woolfson-group/isambard_dev.svg?style=shield&circle-token=0af7a4c0efd449fda7db2d1deef2745b8d289dcf)](https://circleci.com/gh/woolfson-group/isambard_dev)
 [![codecov](https://codecov.io/gh/woolfson-group/isambard_dev/branch/master/graph/badge.svg?token=UEzouOJSdl)](https://codecov.io/gh/woolfson-group/isambard_dev)
 [![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg?maxAge=2592000)](https://gitter.im/woolfson-group/isambard?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
@@ -9,6 +9,9 @@
 ## Recent Changes
 
 #### v1.1
+
+##### v1.1.2
+* Import now tests presence of dssp with `--version` flag to prevent import hang in jupyter notebook on windows systems
 
 ##### v1.1.1
 * `BuffForceField` now has a setter for the `distance_cutoff` property, which will overwrite the default cutoff
