@@ -10,6 +10,10 @@
 
 #### v1.1
 
+##### v1.1.3
+* knobs_into_holes now uses clustering instead of gen_sectors, which is no longer imported.
+
+
 ##### v1.1.2
 * Import now tests presence of dssp with `--version` flag to prevent import hang in jupyter notebook on windows systems
 
