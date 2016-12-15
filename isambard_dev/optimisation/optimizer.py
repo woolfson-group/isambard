@@ -18,6 +18,7 @@ class BaseOptimizer:
         self._params.update(**kwargs)
         creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
         self.toolbox = base.Toolbox()
+        self.parameter_log = []
 
     def parse_individual(self, individual):
         """Converts a deap individual into a full list of parameters for building the specification object.
@@ -96,12 +97,12 @@ class BaseOptimizer:
             plt.ylabel('Score', fontsize=20)
 
     def parameters(self, sequence, value_means, value_ranges, arrangement):
-        """Relates the individual to be evolved to the full parameter string for building the topology object
+        """Relates the individual to be evolved to the full parameter string for building the specification object
 
         Parameters
         ----------
         sequence: str
-            Full amino acid sequence for topology object to be optimized. Must be equal to the number of residues in the
+            Full amino acid sequence for specification object to be optimized. Must be equal to the number of residues in the
             model.
         value_means: list
             List containing mean values for parameters to be optimized.
@@ -159,10 +160,31 @@ class BaseOptimizer:
             log_file.write('Minimization history: \n{0}'.format(self.logbook))
         with open('{0}{1}_bestmodel.pdb'.format(self._params['output_path'], self._params['run_id']),
                   'w') as output_file:
-            model = self._params['topology'](*model_params)
+            model = self._params['specification'](*model_params)
             model.build()
             model.pack_new_sequences(self._params['sequence'])
             output_file.write(model.pdb)
+
+    @property
+    def best_model(self):
+        """Rebuilds the top scoring model from an optimisation.
+
+        Returns
+        -------
+        model: AMPAL
+            Returns an AMPAL model of the top scoring parameters.
+
+        Raises
+        ------
+        NameError:
+            Raises a name error if the optimiser has not been run.
+        """
+        if hasattr(self, 'halloffame'):
+            model = self._params['specification'](*self.parse_individual(self.halloffame[0]))
+            model.pack_new_sequences(self._params['sequence'])
+            return model
+        else:
+            raise NameError('No best model found, have you ran the optimiser?')
 
 
 class BaseScore(BaseOptimizer):
@@ -174,7 +196,7 @@ class BaseScore(BaseOptimizer):
 
     def assign_fitnesses(self, targets):
         self._params['evals'] = len(targets)
-        px_parameters = zip([self._params['topology']] * len(targets),
+        px_parameters = zip([self._params['specification']] * len(targets),
                             [self._params['sequence']] * len(targets),
                             [self.parse_individual(x) for x in targets])
         if (self._params['processors'] == 1) or (sys.platform == 'win32'):
@@ -182,8 +204,55 @@ class BaseScore(BaseOptimizer):
         else:
             with futures.ProcessPoolExecutor(max_workers=self._params['processors']) as executor:
                 fitnesses = executor.map(buff_eval, px_parameters)
-        for ind, fit in zip(targets, fitnesses):
+        tars_fits = list(zip(targets, fitnesses))
+        if 'log_params' in self._params:
+            if self._params['log_params']:
+                self.parameter_log.append([(self.parse_individual(x[0]), x[1]) for x in tars_fits])
+        for ind, fit in tars_fits:
             ind.fitness.values = (fit,)
+
+    def make_energy_funnel_data(self):
+        """Compares models created during the minimisation relates to the best model.
+
+        Returns
+        -------
+        energy_rmsd_gen: [(float, float, int)]
+            A list of triples containing the BUFF score, RMSD to the top model
+            and generation of a model generated during the minimisation.
+        """
+        if not self.parameter_log:
+            raise AttributeError('No parameter log data to make funnel, have you ran the optimiser?')
+        model_cls = self._params['specification']
+        gen_tagged = []
+        for gen, models in enumerate(self.parameter_log):
+            for model in models:
+                gen_tagged.append((model[0], model[1], gen))
+        sorted_pps = sorted(gen_tagged, key=lambda x: x[1])
+        top_result = sorted_pps[0]
+        top_result_model = model_cls(*top_result[0])
+        energy_rmsd_gen = map(self.funnel_rebuild, [(x, top_result_model) for x in sorted_pps[1:]])
+        return list(energy_rmsd_gen)
+
+    def funnel_rebuild(self, psg_trm):
+        """Rebuilds a model from a set of parameters and compares it to a reference model.
+
+        Parameters
+        ----------
+        psg_trm: (([float], float, int), AMPAL)
+            A tuple containing the parameters, score and generation for a
+            model as well as a model of the best scoring parameters.
+
+        Returns
+        -------
+        energy_rmsd_gen: (float, float, int)
+            A triple containing the BUFF score, RMSD to the top model
+            and generation of a model generated during the minimisation.
+        """
+        param_score_gen, top_result_model = psg_trm
+        params, score, gen = param_score_gen
+        model = self._params['specification'](*params)
+        rmsd = top_result_model.rmsd(model)
+        return rmsd, score, gen
 
 
 class BaseRMSD(BaseOptimizer):
@@ -195,7 +264,7 @@ class BaseRMSD(BaseOptimizer):
 
     def assign_fitnesses(self, targets):
         self._params['evals'] = len(targets)
-        px_parameters = zip([self._params['topology']] * len(targets),
+        px_parameters = zip([self._params['specification']] * len(targets),
                             [self._params['sequence']] * len(targets),
                             [self.parse_individual(x) for x in targets],
                             [self._params['ref_pdb']] * len(targets))
@@ -235,7 +304,7 @@ class BaseComparator(BaseOptimizer):
             ind.fitness.values = (fit - (self._params['ref1'] + self._params['ref2']),)
 
     def parameters(self, value_means, value_ranges, arrangement):
-        """Relates the individual to be evolved to the full parameter string for building the topology object.
+        """Relates the individual to be evolved to the full parameter string for building the specification object.
         Special version for comparator type optimizers that doesn't require sequence. Should take up to six parameters
         defining the x, y, z rotations and x, y, z translations in that order. For example testing rotation of 60 +/- 20
         degrees around the z axis at a displacement of 20 +/- 10 Angstrom would require:
@@ -771,18 +840,18 @@ class DE_Opt(OptDE, BaseScore):
     """
     Class for DE algorithm optimizing BUFF fitness
     """
-    def __init__(self, topology, **kwargs):
+    def __init__(self, specification, **kwargs):
         super().__init__(**kwargs)
-        self._params['topology'] = topology
+        self._params['specification'] = specification
 
 
 class DE_RMSD(OptDE, BaseRMSD):
     """
     Class for DE algorithm optimizing RMSD against target model
     """
-    def __init__(self, topology, ref_pdb, **kwargs):
+    def __init__(self, specification, ref_pdb, **kwargs):
         super().__init__(**kwargs)
-        self._params['topology'] = topology
+        self._params['specification'] = specification
         self._params['ref_pdb'] = ref_pdb
 
 
@@ -810,18 +879,18 @@ class PSO_Opt(OptPSO, BaseScore):
     """
     Class for PSO algorithm optimizing BUFF fitness
     """
-    def __init__(self, topology, **kwargs):
+    def __init__(self, specification, **kwargs):
         super().__init__(**kwargs)
-        self._params['topology'] = topology
+        self._params['specification'] = specification
 
 
 class PSO_RMSD(OptPSO, BaseRMSD):
     """
     Class for PSO algorithm optimizing RMSD against target model
     """
-    def __init__(self, topology, ref_pdb, **kwargs):
+    def __init__(self, specification, ref_pdb, **kwargs):
         super().__init__(**kwargs)
-        self._params['topology'] = topology
+        self._params['specification'] = specification
         self._params['ref_pdb'] = ref_pdb
 
 
@@ -849,18 +918,18 @@ class GA_Opt(OptGA, BaseScore):
     """
     Class for GA algorithm optimizing BUFF fitness
     """
-    def __init__(self, topology, **kwargs):
+    def __init__(self, specification, **kwargs):
         super().__init__(**kwargs)
-        self._params['topology'] = topology
+        self._params['specification'] = specification
 
 
 class GA_RMSD(OptGA, BaseRMSD):
     """
     Class for GA algorithm optimizing RMSD against target model
     """
-    def __init__(self, topology, ref_pdb, **kwargs):
+    def __init__(self, specification, ref_pdb, **kwargs):
         super().__init__(**kwargs)
-        self._params['topology'] = topology
+        self._params['specification'] = specification
         self._params['ref_pdb'] = ref_pdb
 
 
@@ -888,18 +957,18 @@ class CMAES_Opt(OptCMAES, BaseScore):
     """
     Class for CMAES algorithm optimizing BUFF fitness
     """
-    def __init__(self, topology, **kwargs):
+    def __init__(self, specification, **kwargs):
         super().__init__(**kwargs)
-        self._params['topology'] = topology
+        self._params['specification'] = specification
 
 
 class CMAES_RMSD(OptCMAES, BaseRMSD):
     """
     Class for CMAES algorithm optimizing RMSD against target model
     """
-    def __init__(self, topology, ref_pdb, **kwargs):
+    def __init__(self, specification, ref_pdb, **kwargs):
         super().__init__(**kwargs)
-        self._params['topology'] = topology
+        self._params['specification'] = specification
         self._params['ref_pdb'] = ref_pdb
 
 
@@ -929,15 +998,15 @@ def buff_eval(params):
     Parameters
     ----------
     params: list
-        Tuple containing the topology to be built, the sequence, and the parameters for model building.
+        Tuple containing the specification to be built, the sequence, and the parameters for model building.
 
     Returns
     -------
     model.bude_score: float
         BUFF score for model to be assigned to particle fitness value.
     """
-    topology, sequence, parsed_ind = params
-    model = topology(*parsed_ind)
+    specification, sequence, parsed_ind = params
+    model = specification(*parsed_ind)
     model.build()
     model.pack_new_sequences(sequence)
     return model.buff_interaction_energy.total_energy
@@ -956,8 +1025,8 @@ def rmsd_eval(rmsd_params):
     rmsd: float
         rmsd against reference model as calculated by profit.
     """
-    topology, sequence, parsed_ind, reference_pdb = rmsd_params
-    model = topology(*parsed_ind)
+    specification, sequence, parsed_ind, reference_pdb = rmsd_params
+    model = specification(*parsed_ind)
     model.pack_new_sequences(sequence)
     ca, bb, aa = run_profit(model.pdb, reference_pdb, path1=False, path2=False)
     return bb
@@ -979,5 +1048,5 @@ def comparator_eval(comparator_params):
     model.pack_new_sequences(seq1 + seq2)
     return model.buff_interaction_energy.total_energy
 
-__author__ = 'Andrew R. Thomson'
+__author__ = 'Andrew R. Thomson, Christopher W. Wood'
 __status__ = 'Development'
