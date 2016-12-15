@@ -13,7 +13,7 @@ from ampal.analyse_protein import polypeptide_vector, crick_angles
 from add_ons.pacc import fit_heptad_register
 from tools.geometry import centre_of_mass, distance, angle_between_vectors, is_acute, find_foot, Axis, \
     minimal_distance_between_lines
-from tools.graph_theory import sorted_connected_components
+
 
 
 _heptad_colours = {
@@ -304,7 +304,8 @@ class KnobGroup(PseudoGroup):
     def get_coiledcoil_region(self, cc_number=0, cutoff=7.0, min_kihs=2):
         """ Assembly containing only assigned regions (i.e. regions with contiguous KnobsIntoHoles. """
         g = self.filter_graph(self.graph, cutoff=cutoff, min_kihs=min_kihs)
-        ccs = sorted_connected_components(g)
+        ccs = sorted(networkx.connected_component_subgraphs(g, copy=True),
+                                 key=lambda x: len(x.nodes()), reverse=True)
         cc = ccs[cc_number]
         helices = [x for x in g.nodes() if x.number in cc.nodes()]
         assigned_regions = self.get_assigned_regions(helices=helices, include_alt_states=False, complementary_only=True)

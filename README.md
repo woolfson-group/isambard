@@ -10,6 +10,13 @@
 
 #### v1.1
 
+##### v1.1.4
+* Functionality that has now been moved to isocket repository (https://github.com/woolfson-group/isocket) has been removed.
+* Deleted:
+    * coeus database folder (3 modules)
+    * graph_theory and test_graph_theory
+    * get_protein_dict_from_cif
+
 ##### v1.1.3
 * knobs_into_holes now uses clustering instead of gen_sectors, which is no longer imported.
 
