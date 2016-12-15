@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-import datetime
 import parmed
 from pathlib import Path
 from urllib.request import Request, urlopen
