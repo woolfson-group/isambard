@@ -35,7 +35,7 @@ def run_goap(input_file,path=True):
         return None
 
     try:
-        goap_results = goap_output.decode()
+        goap_results = goap_output.stdout.decode()
 
     except ValueError:
         print ("No result")
