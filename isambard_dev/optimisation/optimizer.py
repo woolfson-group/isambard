@@ -909,6 +909,14 @@ class DE_Opt(OptDE, BaseScore):
         super().__init__(**kwargs)
         self._params['specification'] = specification
 
+class DE_Opt_Internal(OptDE, BaseInternalScore):
+    """
+    Class for DE algorithm optimizing BUFF internal enegyfitness
+    """
+    def __init__(self, specification, **kwargs):
+        super().__init__(**kwargs)
+        self._params['specification'] = specification
+
 class DE_RMSD(OptDE, BaseRMSD):
     """
     Class for DE algorithm optimizing RMSD against target model
@@ -993,7 +1001,7 @@ class GA_Opt_Internal(OptGA, BaseInternalScore):
     def __init__(self, specification, **kwargs):
         super().__init__(**kwargs)
         self._params['sepcification'] = specification
-        
+
 class GA_RMSD(OptGA, BaseRMSD):
     """
     Class for GA algorithm optimizing RMSD against target model
