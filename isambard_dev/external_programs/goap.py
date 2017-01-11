@@ -30,18 +30,15 @@ def run_goap(input_file,path=True):
     try:
         goap_output = subprocess.run([str(goap_exe)],stdin=goap_fh,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
 
-    except:
-        FileNotFoundError as e:
-            print (e, '\nSomething went wrong')
-            return None
+    except FileNotFoundError as e:
+        print (e, '\nSomething went wrong')
+        return None
 
     try:
         goap_results = goap_output.decode()
 
-    except:
-
-        ValueError:
-            print ("No result")
+    except ValueError:
+        print ("No result")
         return None
 
     return goap_results
