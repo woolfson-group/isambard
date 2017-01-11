@@ -164,6 +164,8 @@ def install_for_circleci(settings_path):
                    "path": "/home/ubuntu/isambard_dev/dependencies_for_isambard/reduce/reduce.3.23.130521.linuxi386"},
         "scwrl": {"path": "/home/ubuntu/isambard_dev/Scwrl4",
                   "rigid_rotamer_model": True}
+        "goap":{"folder" : "/home/ubuntu/isambard_dev/dependencies_for_isambard/goap",
+                "goap_exe" : "/home/ubuntu/isambard_dev/dependencies_for_isambard/goap/goap"}
         }
     with open(str(settings_path), 'w') as outf:
         outf.write(json.dumps(cci_settings, sort_keys=True, indent=4, separators=(',', ':')))
