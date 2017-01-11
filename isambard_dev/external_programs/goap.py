@@ -49,4 +49,7 @@ def run_goap(input_file, path=True):
         print ("No result")
         return None
 
-    return goap_results
+    goap_results.rstrip()
+    goap_words = goap_results.split()
+
+    return goap_words[2:5]
