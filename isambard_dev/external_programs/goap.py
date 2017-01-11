@@ -30,7 +30,34 @@ class GoapScore(object):
         return "<GOAP Score {:.2f}: | DFIRE Score {:.2f} | GOAP_AG Score {:.2f}>".format(
             self.goap, self.dfire, self.goap_ag)
 
+def check_goap_avail():
+    is_goap_available = False
+    if os.path.isfile(global_settings['goap']['goap_exe']):
+        is_goap_available = True
+    else:
+        warning_string = ('\n\nGOAP not found and so cannot be used. Check that the path to the GOAP binary'
+                          ' in `.isambard_settings` is correct.\n'
+                          'Suggestion:\n'
+                          'You might want to try running isambard.settings.configure() after importing ISAMBARD in a\n'
+                          'Python interpreter or running `configure.py` in the module folder.')
+        warnings.warn(warning_string, DependencyNotFoundWarning)
+    return is_goap_available
+
+
+global_settings['goap']['available'] = check_goap_avail()
+
 def run_goap(input_file, path=True):
+    
+
+    if global_settings['goap']['available'] is None:
+        global_settings['goap']['available'] = check_goap_avail()
+
+    if not global_settings['goap']['available']:
+        warning_string = ('GOAP not found, cannot run_goap.\n'
+                          'Check that the path to the GOAP binary in `.isambard_settings` is correct.\n'
+                          'You might want to try rerunning `configure.py`')
+        warnings.warn(warning_string, DependencyNotFoundWarning)
+        return
 
     if path:
         input_path = Path(input_file)
