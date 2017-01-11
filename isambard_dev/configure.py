@@ -144,6 +144,15 @@ def optional_install():
     sd_path = get_user_path('Please provide a path to where you structural database is stored.', required=False)
     sd['path'] = str(sd_path)
     settings['structural_database'] = sd
+
+    # GOAP Statistical potential
+    print('{BOLD}Setting up GOAP (Generalized orientation-dependent all-atom statistical potential (includes DFIRE)'.format(**text_colours))
+    goap = {}
+    goap_exe = get_user_path('Please provide a path to your GOAP executable.',required=False)
+    goap['goap_exe'] = str(goap_exe)
+    goap_folder = goap_exe.parent
+    goap['folder'] = str(goap_folder)
+    settings['goap'] = goap
     return
 
 
@@ -154,7 +163,9 @@ def install_for_circleci(settings_path):
         "reduce": {"folder": "/home/ubuntu/isambard_dev/dependencies_for_isambard/reduce",
                    "path": "/home/ubuntu/isambard_dev/dependencies_for_isambard/reduce/reduce.3.23.130521.linuxi386"},
         "scwrl": {"path": "/home/ubuntu/isambard_dev/Scwrl4",
-                  "rigid_rotamer_model": True}
+                  "rigid_rotamer_model": True},
+        "goap":{"folder" : "/home/ubuntu/isambard_dev/dependencies_for_isambard/goap",
+                "goap_exe" : "/home/ubuntu/isambard_dev/dependencies_for_isambard/goap/goap"}
         }
     with open(str(settings_path), 'w') as outf:
         outf.write(json.dumps(cci_settings, sort_keys=True, indent=4, separators=(',', ':')))

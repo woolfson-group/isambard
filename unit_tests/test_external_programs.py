@@ -143,3 +143,13 @@ class TestDSSP(unittest.TestCase):
         """Test the SS tagging functionality."""
         test_file_path = os.path.join('unit_tests', 'testing_files', '3qy1.pdb')
         self.check_dssp_tag(test_file_path)
+
+class TestGOAP(unittest.TestCase):
+
+    def test_3qy1(self):
+        """Find covalent bonds in backbone of 3qy1"""
+        test_path = os.path.join('unit_tests', 'testing_files', '3qy1.pdb')
+        test_pdb = isambard.ampal.convert_pdb_to_ampal(test_path)
+        test_goap = isambard.external_programs.run_goap(test_pdb.pdb,path=False)
+        self.assertEqual(test_goap.goap, -74628.09)
+
