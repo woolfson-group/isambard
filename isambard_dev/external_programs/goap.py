@@ -22,7 +22,7 @@ def run_goap(input_file,path=True):
     goap_dir = "/Users/chgjb/goap-alone"
     goap_exe = "/Users/chgjb/goap-alone/goap"
     goap_fh = tempfile.NamedTemporaryFile()
-    goap_input = "{}\n{}\n".format(goap_dir,input_path.name)
+    goap_input = "{}\n{}\n".format(goap_dir, str(input_path.absolute()))
     encoded_goap_input = goap_input.encode()
     goap_fh.write(encoded_goap_input)
     goap_fh.seek(0)
