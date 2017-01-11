@@ -1000,7 +1000,7 @@ class GA_Opt_Internal(OptGA, BaseInternalScore):
     """
     def __init__(self, specification, **kwargs):
         super().__init__(**kwargs)
-        self._params['sepcification'] = specification
+        self._params['specification'] = specification
 
 class GA_RMSD(OptGA, BaseRMSD):
     """
