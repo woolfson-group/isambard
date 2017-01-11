@@ -16,8 +16,8 @@ def run_goap(input_file,path=True):
         encoded_input = input_file.encode()
         pathf.write(encoded_input)
         pathf.seek(0)
-        file_path=Path(file_path)
-        input_path = Path(file_path)
+        file_path = pathf.name
+        input_path=Path(file_path)
 
     goap_dir = "/Users/chgjb/goap-alone"
     goap_exe = "/Users/chgjb/goap-alone/goap"
