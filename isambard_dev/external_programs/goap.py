@@ -47,7 +47,7 @@ def check_goap_avail():
 global_settings['goap']['available'] = check_goap_avail()
 
 def run_goap(input_file, path=True):
-    
+
 
     if global_settings['goap']['available'] is None:
         global_settings['goap']['available'] = check_goap_avail()
