@@ -50,17 +50,18 @@ def run_goap(input_file, path=True):
         file_path = pathf.name
         input_path = Path(file_path)
 
-    goap_dir = "/Users/chgjb/goap-alone"
-    goap_exe = "/Users/chgjb/goap-alone/goap"
+    goap_dir = Path(global_settings['goap']['folder'])
+    goap_exe = Path(global_settings['goap']['goap_exe'])
+
     goap_fh = tempfile.NamedTemporaryFile(dir=getcwd())
-    goap_input = "{}\n{}\n".format(goap_dir, str(input_path.name))
+    goap_input = "{}\n{}\n".format(str(goap_dir), str(input_path.name))
 
     encoded_goap_input = goap_input.encode()
 
     goap_fh.write(encoded_goap_input)
     goap_fh.seek(0)
     try:
-        goap_output = subprocess.run(goap_exe, stdin=goap_fh, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        goap_output = subprocess.run(str(goap_exe), stdin=goap_fh, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     except FileNotFoundError as e:
         print (e, '\nSomething went wrong')
