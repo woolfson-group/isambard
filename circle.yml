@@ -14,6 +14,8 @@ dependencies:
     # DSSP
     - chmod +x /home/ubuntu/isambard_dev/dependencies_for_isambard/dssp/dssp-2.0.4
     # GOAP
+    - gunzip /home/ubuntu/isambard_dev/dependencies_for_isambard/goap/fort.31_g72_noshift5_new.gz
+    - gunzip /home/ubuntu/isambard_dev/dependencies_for_isambard/goap/fort.21_1.61_2.gz
     - chmod +x /home/ubuntu/isambard_dev/dependencies_for_isambard/goap/goap
     - pip install --upgrade pip
   override:
