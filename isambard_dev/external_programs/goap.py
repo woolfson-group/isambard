@@ -6,8 +6,32 @@ from shutil import copyfile
 
 from settings import global_settings
 
+class GoapScore(object):
+    def __init__(self, scores):
+        """Object containing all the different scores calculated by GOAP.
+
+        Parameters
+        ----------
+
+        scores: [(str, str, str)]
+            List of GOAP scores
+        """
+        scores.rstrip()
+        score_words = scores.split()
+        goap_score = float(score_words[2])
+        dfire_score = float(score_words[3])
+        goap_ag_score = float(score_words[4])
+
+        self.goap = goap_score
+        self.dfire = dfire_score
+        self.goap_ag = goap_ag_score
+
+    def __repr__(self):
+        return "<GOAP Score {:.2f}: | DFIRE Score {:.2f} | GOAP_AG Score {:.2f}>".format(
+            self.goap, self.dfire, self.goap_ag)
 
 def run_goap(input_file, path=True):
+
     if path:
         input_path = Path(input_file)
         if not input_path.exists():
@@ -50,6 +74,5 @@ def run_goap(input_file, path=True):
         return None
 
     goap_results.rstrip()
-    goap_words = goap_results.split()
-
-    return goap_words[2:5]
+    scores = GoapScore(goap_results)
+    return scores
