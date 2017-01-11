@@ -11,12 +11,13 @@ def check_dssp_avail():
     is_dssp_available = False
     if os.path.isfile(global_settings['dssp']['path']):
         try:
-            subprocess.check_output([global_settings['dssp']['path'], ' --version'], stderr=subprocess.DEVNULL)
-        except subprocess.CalledProcessError:
+            subprocess.check_output([global_settings['dssp']['path'], '--version'], stderr=subprocess.DEVNULL)
             is_dssp_available = True
+        except:
+            pass
     else:
         warning_string = ('\n\nDSSP not found and so cannot be used. Check that the path to the DSSP binary'
-                          ' in `.isambard_settings` is correct.\n'
+                          ' in `settings.json` is correct.\n'
                           'Suggestion:\n'
                           'You might want to try running isambard.settings.configure() after importing ISAMBARD in a\n'
                           'Python interpreter or running `configure.py` in the module folder.')
