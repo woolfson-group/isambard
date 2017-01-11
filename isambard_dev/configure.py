@@ -144,6 +144,15 @@ def optional_install():
     sd_path = get_user_path('Please provide a path to where you structural database is stored.', required=False)
     sd['path'] = str(sd_path)
     settings['structural_database'] = sd
+
+    # GOAP Statistical potential
+    print('{BOLD}Setting up GOAP (Generalized orientation-dependent all-atom statistical potential (includes DFIRE)'.format(**text_colours))
+    goap = {}
+    goap_exe = get_user_path('Please provide a path to your GOAP executable.',required=False)
+    goap['goap_exe'] = str(goap_exe)
+    goap_folder = goap_exe.parent
+    goap['folder'] = str(goap_folder)
+    settings['goap'] = goap
     return
 
 
