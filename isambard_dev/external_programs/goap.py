@@ -28,7 +28,7 @@ def run_goap(input_file,path=True):
     goap_fh.seek(0)
 
     try:
-        goap_output = subprocess.run([str(goap_exe), stdin=goap_fh],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        goap_output = subprocess.run([str(goap_exe)],stdin=goap_fh,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
 
     except:
         FileNotFoundError as e:
