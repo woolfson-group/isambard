@@ -1,9 +1,8 @@
 import subprocess
 import tempfile
+import os
 from pathlib import Path
-from os import getcwd
 from shutil import copyfile
-
 from settings import global_settings
 
 class GoapScore(object):
@@ -65,12 +64,12 @@ def run_goap(input_file, path=True):
             print('No file found at', path)
             return None
 
-        pathf = tempfile.NamedTemporaryFile(dir=getcwd())
+        pathf = tempfile.NamedTemporaryFile(dir=os.getcwd())
         copyfile(input_file, pathf.name)
         file_path = pathf.name
         input_path = Path(file_path)
     else:
-        pathf = tempfile.NamedTemporaryFile(dir=getcwd())
+        pathf = tempfile.NamedTemporaryFile(dir=os.getcwd())
         encoded_input = input_file.encode()
         pathf.write(encoded_input)
         pathf.seek(0)
@@ -80,7 +79,7 @@ def run_goap(input_file, path=True):
     goap_dir = Path(global_settings['goap']['folder'])
     goap_exe = Path(global_settings['goap']['goap_exe'])
 
-    goap_fh = tempfile.NamedTemporaryFile(dir=getcwd())
+    goap_fh = tempfile.NamedTemporaryFile(dir=os.getcwd())
     goap_input = "{}\n{}\n".format(str(goap_dir), str(input_path.name))
 
     encoded_goap_input = goap_input.encode()
