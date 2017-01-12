@@ -3,31 +3,11 @@ import tempfile
 import os
 from pathlib import Path
 from shutil import copyfile
+import warnings
+
 from settings import global_settings
+from tools.isambard_warnings import DependencyNotFoundWarning
 
-class GoapScore(object):
-    def __init__(self, scores):
-        """Object containing all the different scores calculated by GOAP.
-
-        Parameters
-        ----------
-
-        scores: [(str, str, str)]
-            List of GOAP scores
-        """
-        scores.rstrip()
-        score_words = scores.split()
-        goap_score = float(score_words[2])
-        dfire_score = float(score_words[3])
-        goap_ag_score = float(score_words[4])
-
-        self.goap = goap_score
-        self.dfire = dfire_score
-        self.goap_ag = goap_ag_score
-
-    def __repr__(self):
-        return "<GOAP Score {:.2f}: | DFIRE Score {:.2f} | GOAP_AG Score {:.2f}>".format(
-            self.goap, self.dfire, self.goap_ag)
 
 def check_goap_avail():
     is_goap_available = False
@@ -44,6 +24,7 @@ def check_goap_avail():
 
 
 global_settings['goap']['available'] = check_goap_avail()
+
 
 def run_goap(input_file, path=True):
 
@@ -103,3 +84,28 @@ def run_goap(input_file, path=True):
     goap_results.rstrip()
     scores = GoapScore(goap_results)
     return scores
+
+
+class GoapScore(object):
+    def __init__(self, scores):
+        """Object containing all the different scores calculated by GOAP.
+
+        Parameters
+        ----------
+
+        scores: [(str, str, str)]
+            List of GOAP scores
+        """
+        scores.rstrip()
+        score_words = scores.split()
+        goap_score = float(score_words[2])
+        dfire_score = float(score_words[3])
+        goap_ag_score = float(score_words[4])
+
+        self.goap = goap_score
+        self.dfire = dfire_score
+        self.goap_ag = goap_ag_score
+
+    def __repr__(self):
+        return "<GOAP Score {:.2f}: | DFIRE Score {:.2f} | GOAP_AG Score {:.2f}>".format(
+            self.goap, self.dfire, self.goap_ag)
