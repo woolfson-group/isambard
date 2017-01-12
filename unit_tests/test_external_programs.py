@@ -14,6 +14,7 @@ cannonical_labels = 'ACDEFGHIKLMNPQRSTVWY'
 non_cannonical_labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 
+@unittest.skipIf(not isambard.settings.global_settings['scwrl']['available'], "External program not detected.")
 class TestScwrl4(unittest.TestCase):
 
     def test_check_scwrl_avail(self):
@@ -97,6 +98,7 @@ class TestScwrl4(unittest.TestCase):
         self.assertEqual(cc_tet.sequences, cc_tet.basis_set_sequences)
 
 
+@unittest.skipIf(not isambard.settings.global_settings['scwrl']['available'], "External program not detected.")
 class TestDSSP(unittest.TestCase):
 
     def check_dssp_tag(self, test_file_path):
@@ -144,6 +146,8 @@ class TestDSSP(unittest.TestCase):
         test_file_path = os.path.join('unit_tests', 'testing_files', '3qy1.pdb')
         self.check_dssp_tag(test_file_path)
 
+
+@unittest.skipIf(not isambard.settings.global_settings['goap']['available'], "External program not detected.")
 class TestGOAP(unittest.TestCase):
 
     def test_3qy1(self):
@@ -152,4 +156,3 @@ class TestGOAP(unittest.TestCase):
         test_pdb = isambard.ampal.convert_pdb_to_ampal(test_path)
         test_goap = isambard.external_programs.run_goap(test_pdb.pdb,path=False)
         self.assertEqual(test_goap.goap, -74628.09)
-
