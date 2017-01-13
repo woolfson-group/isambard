@@ -3,42 +3,20 @@ import tempfile
 import os
 from pathlib import Path
 from shutil import copyfile
-import warnings
 
 from settings import global_settings
-from tools.isambard_warnings import DependencyNotFoundWarning
+from tools.isambard_warnings import check_availability
 
 
-def check_goap_avail():
+def test_goap():
     is_goap_available = False
     if os.path.isfile(global_settings['goap']['goap_exe']):
         is_goap_available = True
-    else:
-        warning_string = ('\n\nGOAP not found and so cannot be used. Check that the path to the GOAP binary'
-                          ' in `.isambard_settings` is correct.\n'
-                          'Suggestion:\n'
-                          'You might want to try running isambard.settings.configure() after importing ISAMBARD in a\n'
-                          'Python interpreter or running `configure.py` in the module folder.')
-        warnings.warn(warning_string, DependencyNotFoundWarning)
     return is_goap_available
 
 
-global_settings['goap']['available'] = check_goap_avail()
-
-
+@check_availability('goap', test_goap, global_settings)
 def run_goap(input_file, path=True):
-
-
-    if global_settings['goap']['available'] is None:
-        global_settings['goap']['available'] = check_goap_avail()
-
-    if not global_settings['goap']['available']:
-        warning_string = ('GOAP not found, cannot run_goap.\n'
-                          'Check that the path to the GOAP binary in `.isambard_settings` is correct.\n'
-                          'You might want to try rerunning `configure.py`')
-        warnings.warn(warning_string, DependencyNotFoundWarning)
-        return
-
     if path:
         input_path = Path(input_file)
         if not input_path.exists():
