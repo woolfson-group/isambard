@@ -64,7 +64,7 @@ def parse_dfire_out(dfire_std_out):
     return float(dfire_std_out.split()[1])
 
 
-def calculate_score(pdb, path=True):
+def calculate_dfire_score(pdb, path=True):
     """Calculates the dfire score of the pdb file.
 
     Parameters
