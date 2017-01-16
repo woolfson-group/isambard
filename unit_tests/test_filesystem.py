@@ -1,3 +1,4 @@
+import requests
 import unittest
 
 import isambard_dev as isambard
@@ -12,7 +13,7 @@ class NumberOfMmolsTestCase(unittest.TestCase):
 
     def test_nonsense_raises_value_error(self):
         code = "nonsense_code"
-        self.assertRaises(ValueError, isambard.add_ons.filesystem.number_of_mmols, code)
+        self.assertRaises(requests.ConnectionError, isambard.add_ons.filesystem.number_of_mmols, code)
 
 
 class PreferredMmolTestCase(unittest.TestCase):

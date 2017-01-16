@@ -156,3 +156,21 @@ class TestGOAP(unittest.TestCase):
         test_pdb = isambard.ampal.convert_pdb_to_ampal(test_path)
         test_goap = isambard.external_programs.run_goap(test_pdb.pdb, path=False)
         self.assertEqual(test_goap.goap, -74628.09)
+
+
+@unittest.skipUnless('dfire' in isambard.settings.global_settings, "External program not detected.")
+class TestDfire(unittest.TestCase):
+
+    def test_3qy1(self):
+        """Test Dfire score on reference structure 3QY1"""
+        test_path = os.path.join('unit_tests', 'testing_files', '3qy1.pdb')
+        test_pdb = isambard.ampal.convert_pdb_to_ampal(test_path)
+        test_score = isambard.external_programs.calculate_dfire_score(test_pdb.pdb, path=False)
+        self.assertEqual(test_score, -863.7)
+
+    def test_2ht0(self):
+        """Test Dfire score on reference structure 2HT0"""
+        test_path = os.path.join('unit_tests', 'testing_files', '2ht0.pdb')
+        test_pdb = isambard.ampal.convert_pdb_to_ampal(test_path)
+        test_score = isambard.external_programs.calculate_dfire_score(test_pdb.pdb, path=False)
+        self.assertEqual(test_score, -303.3)
