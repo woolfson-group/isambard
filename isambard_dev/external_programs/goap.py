@@ -104,7 +104,7 @@ def run_goap(input_file, path=True):
     scores = GoapScore(goap_results)
     return scores
 
-def goap_batch(models):
+def goap_batch(models,delete_files=False):
 
     """Runs goap in batch
     For use by optimizers only
@@ -151,9 +151,9 @@ def goap_batch(models):
         score = words[2]
         goap_scores.append(float(score))
 
-    # clean up
-
-    for model in models:
-        os.remove(model)
+    # clean up if necessary
+    if delete_files == True:
+        for model in models:
+            os.remove(model)
 
     return goap_scores
