@@ -158,27 +158,27 @@ class TestGOAP(unittest.TestCase):
         self.assertEqual(test_goap.goap, -74628.09)
 
 
-@unittest.skipUnless('dfire' in isambard.settings.global_settings, "External program not detected.")
-class TestDfire(unittest.TestCase):
+@unittest.skipUnless('dfire2' in isambard.settings.global_settings, "External program not detected.")
+class TestDfire2(unittest.TestCase):
 
     def test_3qy1(self):
-        """Test Dfire score on reference structure 3QY1"""
+        """Test Dfire2 score on reference structure 3QY1"""
         test_path = os.path.join('unit_tests', 'testing_files', '3qy1.pdb')
         test_pdb = isambard.ampal.convert_pdb_to_ampal(test_path)
-        test_score = isambard.external_programs.dfire.calculate_dfire_score(test_pdb.pdb, path=False)
+        test_score = isambard.external_programs.dfire2.calculate_dfire2_score(test_pdb.pdb, path=False)
         self.assertEqual(test_score, -863.7)
 
     def test_2ht0(self):
-        """Test Dfire score on reference structure 2HT0"""
+        """Test Dfire2 score on reference structure 2HT0"""
         test_path = os.path.join('unit_tests', 'testing_files', '2ht0.pdb')
         test_pdb = isambard.ampal.convert_pdb_to_ampal(test_path)
-        test_score = isambard.external_programs.dfire.calculate_dfire_score(test_pdb.pdb, path=False)
+        test_score = isambard.external_programs.dfire2.calculate_dfire2_score(test_pdb.pdb, path=False)
         self.assertEqual(test_score, -303.3)
 
-    def test_dfire_GA_optimizer(self):
-        """Tests the GA optimizer based on Dfire scoring."""
+    def test_dfire2_GA_optimizer(self):
+        """Tests the GA optimizer based on Dfire2 scoring."""
         cc = isambard.specifications.CoiledCoil(2)
-        opt = isambard.external_programs.dfire.GA_Dfire_Opt(
+        opt = isambard.external_programs.dfire2.GA_Dfire2_Opt(
             isambard.specifications.CoiledCoil.from_parameters,
             log_params=True
             )
@@ -191,10 +191,10 @@ class TestDfire(unittest.TestCase):
         opt.run_opt(3, 2, 1)
         self.assertEqual(opt.best_model.sequences, cc.basis_set_sequences)
 
-    def test_dfire_DE_optimizer(self):
-        """Tests the DE optimizer based on Dfire scoring."""
+    def test_dfire2_DE_optimizer(self):
+        """Tests the DE optimizer based on Dfire2 scoring."""
         cc = isambard.specifications.CoiledCoil(2)
-        opt = isambard.external_programs.dfire.DE_Dfire_Opt(
+        opt = isambard.external_programs.dfire2.DE_Dfire2_Opt(
             isambard.specifications.CoiledCoil.from_parameters,
             log_params=True
             )
@@ -207,10 +207,10 @@ class TestDfire(unittest.TestCase):
         opt.run_opt(3, 2, 1)
         self.assertEqual(opt.best_model.sequences, cc.basis_set_sequences)
 
-    def test_dfire_PSO_optimizer(self):
-        """Tests the PSO optimizer based on Dfire scoring."""
+    def test_dfire2_PSO_optimizer(self):
+        """Tests the PSO optimizer based on Dfire2 scoring."""
         cc = isambard.specifications.CoiledCoil(2)
-        opt = isambard.external_programs.dfire.PSO_Dfire_Opt(
+        opt = isambard.external_programs.dfire2.PSO_Dfire2_Opt(
             isambard.specifications.CoiledCoil.from_parameters,
             log_params=True
             )
@@ -223,10 +223,10 @@ class TestDfire(unittest.TestCase):
         opt.run_opt(3, 2, 1)
         self.assertEqual(opt.best_model.sequences, cc.basis_set_sequences)
 
-    def test_dfire_CMAES_optimizer(self):
-        """Tests the CMAES optimizer based on Dfire scoring."""
+    def test_dfire2_CMAES_optimizer(self):
+        """Tests the CMAES optimizer based on Dfire2 scoring."""
         cc = isambard.specifications.CoiledCoil(2)
-        opt = isambard.external_programs.dfire.CMAES_Dfire_Opt(
+        opt = isambard.external_programs.dfire2.CMAES_Dfire2_Opt(
             isambard.specifications.CoiledCoil.from_parameters,
             log_params=True
             )
