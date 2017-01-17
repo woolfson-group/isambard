@@ -174,3 +174,67 @@ class TestDfire(unittest.TestCase):
         test_pdb = isambard.ampal.convert_pdb_to_ampal(test_path)
         test_score = isambard.external_programs.dfire.calculate_dfire_score(test_pdb.pdb, path=False)
         self.assertEqual(test_score, -303.3)
+
+    def test_dfire_GA_optimizer(self):
+        """Tests the GA optimizer based on Dfire scoring."""
+        cc = isambard.specifications.CoiledCoil(2)
+        opt = isambard.external_programs.dfire.GA_Dfire_Opt(
+            isambard.specifications.CoiledCoil.from_parameters,
+            log_params=True
+            )
+        opt.parameters(
+            cc.basis_set_sequences,
+            [5.0, 220.0, 180.0],
+            [2.5, 200.0, 180.0],
+            [2, len(cc.basis_set_sequences[0]), 'var0', 'var1', 'var2']
+        )
+        opt.run_opt(3, 2, 1)
+        self.assertEqual(opt.best_model.sequences, cc.basis_set_sequences)
+
+    def test_dfire_DE_optimizer(self):
+        """Tests the DE optimizer based on Dfire scoring."""
+        cc = isambard.specifications.CoiledCoil(2)
+        opt = isambard.external_programs.dfire.DE_Dfire_Opt(
+            isambard.specifications.CoiledCoil.from_parameters,
+            log_params=True
+            )
+        opt.parameters(
+            cc.basis_set_sequences,
+            [5.0, 220.0, 180.0],
+            [2.5, 200.0, 180.0],
+            [2, len(cc.basis_set_sequences[0]), 'var0', 'var1', 'var2']
+        )
+        opt.run_opt(3, 2, 1)
+        self.assertEqual(opt.best_model.sequences, cc.basis_set_sequences)
+
+    def test_dfire_PSO_optimizer(self):
+        """Tests the PSO optimizer based on Dfire scoring."""
+        cc = isambard.specifications.CoiledCoil(2)
+        opt = isambard.external_programs.dfire.PSO_Dfire_Opt(
+            isambard.specifications.CoiledCoil.from_parameters,
+            log_params=True
+            )
+        opt.parameters(
+            cc.basis_set_sequences,
+            [5.0, 220.0, 180.0],
+            [2.5, 200.0, 180.0],
+            [2, len(cc.basis_set_sequences[0]), 'var0', 'var1', 'var2']
+        )
+        opt.run_opt(3, 2, 1)
+        self.assertEqual(opt.best_model.sequences, cc.basis_set_sequences)
+
+    def test_dfire_CMAES_optimizer(self):
+        """Tests the CMAES optimizer based on Dfire scoring."""
+        cc = isambard.specifications.CoiledCoil(2)
+        opt = isambard.external_programs.dfire.CMAES_Dfire_Opt(
+            isambard.specifications.CoiledCoil.from_parameters,
+            log_params=True
+            )
+        opt.parameters(
+            cc.basis_set_sequences,
+            [5.0, 220.0, 180.0],
+            [2.5, 200.0, 180.0],
+            [2, len(cc.basis_set_sequences[0]), 'var0', 'var1', 'var2']
+        )
+        opt.run_opt(3, 2, 1)
+        self.assertEqual(opt.best_model.sequences, cc.basis_set_sequences)
