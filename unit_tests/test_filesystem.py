@@ -10,7 +10,7 @@ class NumberOfMmolsTestCase(unittest.TestCase):
         code = '4nfw'
         self.assertEqual(isambard.add_ons.filesystem.number_of_mmols(code=code), 18)
 
-        
+
 class PreferredMmolTestCase(unittest.TestCase):
     """Tests isambard.add_ons.filesystem.preferred_mmol """
     def test_preferred_mmol_1cwa(self):
