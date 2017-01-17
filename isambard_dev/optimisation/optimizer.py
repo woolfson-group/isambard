@@ -74,6 +74,7 @@ def rmsd_eval(rmsd_params):
     ca, bb, aa = run_profit(model.pdb, reference_pdb, path1=False, path2=False)
     return bb
 
+
 def comparator_eval(comparator_params):
     """Gets BUFF score for interaction between two AMPAL objects
     """
@@ -290,6 +291,7 @@ class BaseOptimizer:
             return model
         else:
             raise NameError('No best model found, have you ran the optimiser?')
+
 
 class BaseScore(BaseOptimizer):
     """
@@ -1168,6 +1170,7 @@ class GA_Opt(OptGA, BaseScore):
         super().__init__(**kwargs)
         self._params['specification'] = specification
 
+
 class GA_Opt_GOAP(OptGA, BaseGoapScore):
     """
     Class for GA algorithm optimizing Goap score
@@ -1253,7 +1256,6 @@ class CMAES_Comparator(OptCMAES, BaseComparator):
         obj2.pack_new_sequences(seq2)
         self._params['ref1'] = obj1.buff_interaction_energy.total_energy
         self._params['ref2'] = obj2.buff_interaction_energy.total_energy
-
 
 
 __author__ = 'Andrew R. Thomson, Christopher W. Wood, Gail J. Bartlett'
