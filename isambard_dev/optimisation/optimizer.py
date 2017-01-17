@@ -1248,5 +1248,5 @@ def comparator_eval(comparator_params):
     model.pack_new_sequences(seq1 + seq2)
     return model.buff_interaction_energy.total_energy
 
-__author__ = 'Andrew R. Thomson, Christopher W. Wood'
+__author__ = 'Andrew R. Thomson, Christopher W. Wood, Gail J. Bartlett'
 __status__ = 'Development'

@@ -112,7 +112,7 @@ def goap_batch(models,delete_files=False):
     Parameters
     ----------
     models : []
-        list of tempfile names
+        list of file names
 
     Returns
     scores : []
@@ -157,3 +157,6 @@ def goap_batch(models,delete_files=False):
             os.remove(model)
 
     return goap_scores
+
+__author__ = 'Gail J. Bartlett'
+__status__ = 'Development'
