@@ -64,6 +64,60 @@ def run_goap(input_file, path=True):
     return scores
 
 
+def goap_batch(models,delete_files=False):
+
+    """Runs goap in batch
+    For use by optimizers only
+
+    Parameters
+    ----------
+    models : []
+        list of file names
+
+    Returns
+    scores : []
+        list of scores
+    """
+
+    goap_dir = Path(global_settings['goap']['folder'])
+    goap_exe = Path(global_settings['goap']['goap_exe'])
+
+    goap_fh = tempfile.NamedTemporaryFile(dir=os.getcwd())
+    goap_input = "{}\n".format(goap_dir)
+    goap_input += "\n".join(models)
+
+    encoded_goap_input = goap_input.encode()
+    goap_fh.write(encoded_goap_input)
+    goap_fh.seek(0)
+
+    try:
+        goap_output = subprocess.run(str(goap_exe),stdin=goap_fh,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    except FileNotFoundError as e:
+        print (e, "\n Something went wrong")
+        return None
+
+    try:
+        goap_results = goap_output.stdout.decode()
+
+    except ValueError:
+        print("No result")
+        return None
+
+    goap_lines = goap_results.splitlines()
+    goap_scores = []
+    for line in goap_lines:
+        words = line.split()
+        score = words[2]
+        goap_scores.append(float(score))
+
+    # clean up if necessary
+    if delete_files == True:
+        for model in models:
+            os.remove(model)
+
+    return goap_scores
+
 class GoapScore(object):
     def __init__(self, scores):
         """Object containing all the different scores calculated by GOAP.
@@ -87,3 +141,7 @@ class GoapScore(object):
     def __repr__(self):
         return "<GOAP Score {:.2f}: | DFIRE Score {:.2f} | GOAP_AG Score {:.2f}>".format(
             self.goap, self.dfire, self.goap_ag)
+
+
+__author__ = 'Gail J. Bartlett'
+__status__ = 'Development'
