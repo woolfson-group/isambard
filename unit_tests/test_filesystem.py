@@ -1,4 +1,3 @@
-import requests
 import unittest
 
 import isambard_dev as isambard
@@ -10,10 +9,6 @@ class NumberOfMmolsTestCase(unittest.TestCase):
         """Tests that there are 18 mmol files for the PDB code 4nfw."""
         code = '4nfw'
         self.assertEqual(isambard.add_ons.filesystem.number_of_mmols(code=code), 18)
-
-    def test_nonsense_raises_value_error(self):
-        code = "nonsense_code"
-        self.assertRaises(requests.ConnectionError, isambard.add_ons.filesystem.number_of_mmols, code)
 
 
 class PreferredMmolTestCase(unittest.TestCase):

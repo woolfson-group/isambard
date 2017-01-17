@@ -2,6 +2,7 @@ import os
 import subprocess
 import tempfile
 
+from optimisation.optimizer import BaseScore, OptCMAES, OptDE, OptGA,  OptPSO
 from settings import global_settings
 from tools.isambard_warnings import check_availability
 
@@ -81,3 +82,72 @@ def calculate_dfire_score(pdb, path=True):
     """
     dfire_out = run_dfire(pdb, path=path)
     return parse_dfire_out(dfire_out)
+
+
+# Dfire Optimiser
+
+
+def dfire_eval(params):
+    """Builds and evaluates Dfire energy of model
+
+    Parameters
+    ----------
+    params: list
+        Tuple containing the specification to be built, the sequence, and the parameters for model building.
+
+    Returns
+    -------
+    model.bude_score: float
+        BUFF score for model to be assigned to particle fitness value.
+    """
+    specification, sequence, parsed_ind = params
+    model = specification(*parsed_ind)
+    model.build()
+    model.pack_new_sequences(sequence)
+    return calculate_dfire_score(model.pdb, path=False)
+
+
+class DfireScore(BaseScore):
+    """
+    Assigns Dfire score as fitness to individuals in optimization
+    """
+    evaluation_function = staticmethod(dfire_eval)
+
+
+class CMAES_Dfire_Opt(OptDE, DfireScore):
+    """
+    Class for DE algorithm optimizing Dfire fitness
+    """
+    def __init__(self, specification, **kwargs):
+        super().__init__(**kwargs)
+        self._params['specification'] = specification
+
+
+class DE_Dfire_Opt(OptCMAES, DfireScore):
+    """
+    Class for DE algorithm optimizing Dfire fitness
+    """
+    def __init__(self, specification, **kwargs):
+        super().__init__(**kwargs)
+        self._params['specification'] = specification
+
+
+class GA_Dfire_Opt(OptGA, DfireScore):
+    """
+    Class for DE algorithm optimizing Dfire fitness
+    """
+    def __init__(self, specification, **kwargs):
+        super().__init__(**kwargs)
+        self._params['specification'] = specification
+
+
+class PSO_Dfire_Opt(OptPSO, DfireScore):
+    """
+    Class for DE algorithm optimizing Dfire fitness
+    """
+    def __init__(self, specification, **kwargs):
+        super().__init__(**kwargs)
+        self._params['specification'] = specification
+
+
+
