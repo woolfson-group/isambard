@@ -153,7 +153,6 @@ def optional_install():
     goap_folder = goap_exe.parent
     goap['folder'] = str(goap_folder)
     settings['goap'] = goap
-    return
 
     # DFire Statistical potential
     print ('{BOLD}Setting up DFIRE2'.format(**text_colours))
@@ -163,6 +162,7 @@ def optional_install():
     dfire2_lib = get_user_path('Please provide a path to your dfire2 library.', required=False)
     dfire2['lib'] = str(dfire2_lib)
     settings['dfire2'] = dfire2
+    return
 
 def install_for_circleci(settings_path):
     cci_settings = {
