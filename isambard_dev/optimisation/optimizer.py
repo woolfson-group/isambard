@@ -367,66 +367,6 @@ class BaseInternalScore(BaseScore):
     """
     evaluation_function = staticmethod(buff_internal_eval)
 
-    def assign_fitnesses(self, targets):
-        self._params['evals'] = len(targets)
-        px_parameters = zip([self._params['specification']] * len(targets),
-                            [self._params['sequence']] * len(targets),
-                            [self.parse_individual(x) for x in targets])
-        if (self._params['processors'] == 1) or (sys.platform == 'win32'):
-            fitnesses = map(buff_internal_eval, px_parameters)
-        else:
-            with futures.ProcessPoolExecutor(max_workers=self._params['processors']) as executor:
-                fitnesses = executor.map(buff_internal_eval, px_parameters)
-        tars_fits = list(zip(targets, fitnesses))
-        if 'log_params' in self._params:
-            if self._params['log_params']:
-                self.parameter_log.append([(self.parse_individual(x[0]), x[1]) for x in tars_fits])
-        for ind, fit in tars_fits:
-            ind.fitness.values = (fit,)
-
-    def make_energy_funnel_data(self):
-        """Compares models created during the minimisation relates to the best model.
-
-        Returns
-        -------
-        energy_rmsd_gen: [(float, float, int)]
-            A list of triples containing the BUFF score, RMSD to the top model
-            and generation of a model generated during the minimisation.
-        """
-        if not self.parameter_log:
-            raise AttributeError('No parameter log data to make funnel, have you ran the optimiser?')
-        model_cls = self._params['specification']
-        gen_tagged = []
-        for gen, models in enumerate(self.parameter_log):
-            for model in models:
-                gen_tagged.append((model[0], model[1], gen))
-        sorted_pps = sorted(gen_tagged, key=lambda x: x[1])
-        top_result = sorted_pps[0]
-        top_result_model = model_cls(*top_result[0])
-        energy_rmsd_gen = map(self.funnel_rebuild, [(x, top_result_model) for x in sorted_pps[1:]])
-        return list(energy_rmsd_gen)
-
-    def funnel_rebuild(self, psg_trm):
-        """Rebuilds a model from a set of parameters and compares it to a reference model.
-
-        Parameters
-        ----------
-        psg_trm: (([float], float, int), AMPAL)
-            A tuple containing the parameters, score and generation for a
-            model as well as a model of the best scoring parameters.
-
-        Returns
-        -------
-        energy_rmsd_gen: (float, float, int)
-            A triple containing the BUFF score, RMSD to the top model
-            and generation of a model generated during the minimisation.
-        """
-        param_score_gen, top_result_model = psg_trm
-        params, score, gen = param_score_gen
-        model = self._params['specification'](*params)
-        rmsd = top_result_model.rmsd(model)
-        return rmsd, score, gen
-
 
 class BaseGoapScore(BaseOptimizer):
 
