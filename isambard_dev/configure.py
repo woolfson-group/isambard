@@ -155,6 +155,14 @@ def optional_install():
     settings['goap'] = goap
     return
 
+    # DFire Statistical potential
+    print ('{BOLD}Setting up DFIRE2'.format(**text_colours))
+    dfire2 = {}
+    dfire2_path = get_user_path('Please provide a path to your dfire2 executable.', required=False)
+    dfire2['path']=str(dfire2_path)
+    dfire2_lib = get_user_path('Please provide a path to your dfire2 library.', required=False)
+    dfire2['lib'] = str(dfire2_lib)
+    settings['dfire2'] = dfire2
 
 def install_for_circleci(settings_path):
     cci_settings = {
