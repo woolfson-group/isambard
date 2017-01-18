@@ -13,6 +13,13 @@ dependencies:
     - chmod +x /home/ubuntu/isambard_dev/dependencies_for_isambard/reduce/reduce.3.23.130521.linuxi386
     # DSSP
     - chmod +x /home/ubuntu/isambard_dev/dependencies_for_isambard/dssp/dssp-2.0.4
+    # GOAP
+    - gunzip /home/ubuntu/isambard_dev/dependencies_for_isambard/goap/fort.31_g72_noshift5_new.gz
+    - gunzip /home/ubuntu/isambard_dev/dependencies_for_isambard/goap/fort.21_1.61_2.gz
+    - chmod +x /home/ubuntu/isambard_dev/dependencies_for_isambard/goap/goap
+    - pip install --upgrade pip
+  override:
+    - pip install -r requirements.txt
 test:
   override:
     - cd /home/ubuntu/isambard_dev

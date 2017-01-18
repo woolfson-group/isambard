@@ -12,8 +12,8 @@ from ampal.ampal_databases import element_data
 from ampal.analyse_protein import polypeptide_vector, crick_angles
 from add_ons.pacc import fit_heptad_register
 from tools.geometry import centre_of_mass, distance, angle_between_vectors, is_acute, find_foot, Axis, \
-    gen_sectors, minimal_distance_between_lines
-from tools.graph_theory import sorted_connected_components
+    minimal_distance_between_lines
+
 
 
 _heptad_colours = {
@@ -111,7 +111,7 @@ def cluster_helices(helices, cluster_distance=12.0):
     return cluster_dict
 
 
-def find_kihs(assembly, hole_size=4, cutoff=7.0, gen_segs=False):
+def find_kihs(assembly, hole_size=4, cutoff=7.0):
     """ KnobIntoHoles between residues of different chains in assembly.
 
     Notes
@@ -132,17 +132,7 @@ def find_kihs(assembly, hole_size=4, cutoff=7.0, gen_segs=False):
     kihs : [KnobIntoHole]
     """
     pseudo_group = side_chain_centres(assembly=assembly, masses=False)
-    # If more than 10 chains in the assembly, use gen_sectors to cut down the number of pairs of chains analyse.
-    if (len(pseudo_group) > 10) and gen_segs:
-        pairs = []
-        sectors = gen_sectors(pseudo_group.get_atoms(), box_size=cutoff)
-        for sector in sectors.values():
-            pseudo_group_subset = [x for x in pseudo_group if set(x.get_atoms()).intersection(set(sector))]
-            for x1, x2 in itertools.permutations(pseudo_group_subset, 2):
-                pairs.append((x1, x2))
-        pairs = set(pairs)
-    else:
-        pairs = itertools.permutations(pseudo_group, 2)
+    pairs = itertools.permutations(pseudo_group, 2)
     kihs = []
     for pp_1, pp_2 in pairs:
         for r in pp_1:
@@ -213,7 +203,7 @@ class KnobGroup(PseudoGroup):
             len(self._monomers), 'KnobIntoHole' if len(self._monomers) == 1 else 'KnobsIntoHoles')
 
     @classmethod
-    def from_helices(cls, assembly, cutoff=7.0, min_helix_length=8, gen_segs=False):
+    def from_helices(cls, assembly, cutoff=7.0, min_helix_length=8):
         """ Generate KnobGroup from the helices in the assembly - classic socket functionality.
 
         Notes
@@ -229,8 +219,6 @@ class KnobGroup(PseudoGroup):
         assembly : Assembly
         cutoff : float
             Socket cutoff in Angstroms
-        segments : bool
-            If True, long helices are split into segments, each of which contatins no long gaps between knob residues.
         min_helix_length : int
             Minimum number of Residues in a helix considered for KIH packing.
 
@@ -254,7 +242,7 @@ class KnobGroup(PseudoGroup):
         cluster_dict = cluster_helices(helices, cluster_distance=(cutoff + 10))
         for k, v in cluster_dict.items():
             if len(v) > 1:
-                kihs = find_kihs(v, cutoff=cutoff, hole_size=4, gen_segs=gen_segs)
+                kihs = find_kihs(v, cutoff=cutoff, hole_size=4)
                 if len(kihs) == 0:
                     continue
                 for x in kihs:
@@ -271,17 +259,18 @@ class KnobGroup(PseudoGroup):
         if cutoff > self.cutoff:
             raise ValueError("cutoff supplied ({0}) cannot be greater than self.cutoff ({1})".format(cutoff,
                                                                                                      self.cutoff))
-        return KnobGroup(monomers=[x for x in self if x.max_kh_distance <= cutoff], ampal_parent=self.ampal_parent)
+        return KnobGroup(monomers=[x for x in self.get_monomers()
+                                   if x.max_kh_distance <= cutoff], ampal_parent=self.ampal_parent)
 
     @property
     def complementary_knobs(self, cutoff=None):
-        return list(set([x.knob_residue for x in self if x.is_complementary(cutoff=cutoff)]))
+        return list(set([x.knob_residue for x in self.get_monomers() if x.is_complementary(cutoff=cutoff)]))
 
     @property
     def graph(self):
         """ Returns MultiDiGraph from kihs. Nodes are helices and edges are kihs. """
         g = networkx.MultiDiGraph()
-        edge_list = [(x.knob_helix, x.hole_helix, x.id, {'kih': x}) for x in self]
+        edge_list = [(x.knob_helix, x.hole_helix, x.id, {'kih': x}) for x in self.get_monomers()]
         g.add_edges_from(edge_list)
         return g
 
@@ -315,7 +304,8 @@ class KnobGroup(PseudoGroup):
     def get_coiledcoil_region(self, cc_number=0, cutoff=7.0, min_kihs=2):
         """ Assembly containing only assigned regions (i.e. regions with contiguous KnobsIntoHoles. """
         g = self.filter_graph(self.graph, cutoff=cutoff, min_kihs=min_kihs)
-        ccs = sorted_connected_components(g)
+        ccs = sorted(networkx.connected_component_subgraphs(g, copy=True),
+                                 key=lambda x: len(x.nodes()), reverse=True)
         cc = ccs[cc_number]
         helices = [x for x in g.nodes() if x.number in cc.nodes()]
         assigned_regions = self.get_assigned_regions(helices=helices, include_alt_states=False, complementary_only=True)
@@ -326,7 +316,7 @@ class KnobGroup(PseudoGroup):
     def daisy_chain_graph(self):
         """ Directed graph with edges from knob residue to each hole residue for each KnobIntoHole in self. """
         g = networkx.DiGraph()
-        for x in self:
+        for x in self.get_monomers():
             for h in x.hole:
                 g.add_edge(x.knob, h)
         return g
@@ -381,9 +371,9 @@ class KnobGroup(PseudoGroup):
         """
         if helices is None:
             helices = self.ampal_parent
-            kihs = self
+            kihs = self.get_monomers()
         else:
-            kihs = [x for x in self if (x.knob_helix in helices) and (x.hole_helix in helices)]
+            kihs = [x for x in self.get_monomers() if (x.knob_helix in helices) and (x.hole_helix in helices)]
         if complementary_only:
             kihs = [x for x in kihs if x.is_complementary(cutoff=cutoff)]
         assigned_regions = {}

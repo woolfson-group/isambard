@@ -10,10 +10,6 @@ class NumberOfMmolsTestCase(unittest.TestCase):
         code = '4nfw'
         self.assertEqual(isambard.add_ons.filesystem.number_of_mmols(code=code), 18)
 
-    def test_nonsense_raises_value_error(self):
-        code = "nonsense_code"
-        self.assertRaises(ValueError, isambard.add_ons.filesystem.number_of_mmols, code)
-
 
 class PreferredMmolTestCase(unittest.TestCase):
     """Tests isambard.add_ons.filesystem.preferred_mmol """

@@ -13,3 +13,4 @@ scipy
 recommonmark
 numpydoc
 pypandoc
+coverage
