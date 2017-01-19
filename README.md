@@ -1,6 +1,6 @@
 #ISAMBARD
 ###Intelligent System for Analysis, Model Building And Rational Design of proteins.
-#### Version 1.1.8 (Jan 17, 2017), Woolfson Group, University of Bristol.
+#### Version 1.1.9 (Jan 18, 2017), Woolfson Group, University of Bristol.
 [![CircleCI](https://circleci.com/gh/woolfson-group/isambard_dev.svg?style=shield&circle-token=0af7a4c0efd449fda7db2d1deef2745b8d289dcf)](https://circleci.com/gh/woolfson-group/isambard_dev)
 [![codecov](https://codecov.io/gh/woolfson-group/isambard_dev/branch/master/graph/badge.svg?token=UEzouOJSdl)](https://codecov.io/gh/woolfson-group/isambard_dev)
 [![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg?maxAge=2592000)](https://gitter.im/woolfson-group/isambard?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
@@ -10,6 +10,9 @@
 ## Recent Changes
 
 #### v1.1
+
+##### v1.1.9
+* Added DFire2 potential
 
 ##### v1.1.8
 * Added GOAP optimization into the GA
