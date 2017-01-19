@@ -317,7 +317,7 @@ class BaseScore(BaseOptimizer):
         for ind, fit in tars_fits:
             ind.fitness.values = (fit,)
 
-    def make_energy_funnel_data(self):
+    def make_energy_funnel_data(self, cores=1):
         """Compares models created during the minimisation relates to the best model.
 
         Returns
@@ -336,15 +336,24 @@ class BaseScore(BaseOptimizer):
         sorted_pps = sorted(gen_tagged, key=lambda x: x[1])
         top_result = sorted_pps[0]
         top_result_model = model_cls(*top_result[0])
-        energy_rmsd_gen = map(self.funnel_rebuild, [(x, top_result_model) for x in sorted_pps[1:]])
+        if (cores == 1) or (sys.platform == 'win32'):
+            energy_rmsd_gen = map(
+                self.funnel_rebuild,
+                [(x, top_result_model, self._params['specification']) for x in sorted_pps[1:]])
+        else:
+            with futures.ProcessPoolExecutor(max_workers=self._params['processors']) as executor:
+                energy_rmsd_gen = executor.map(
+                    self.funnel_rebuild,
+                    [(x, top_result_model, self._params['specification']) for x in sorted_pps[1:]])
         return list(energy_rmsd_gen)
 
-    def funnel_rebuild(self, psg_trm):
+    @staticmethod
+    def funnel_rebuild(psg_trm_spec):
         """Rebuilds a model from a set of parameters and compares it to a reference model.
 
         Parameters
         ----------
-        psg_trm: (([float], float, int), AMPAL)
+        psg_trm: (([float], float, int), AMPAL, specification)
             A tuple containing the parameters, score and generation for a
             model as well as a model of the best scoring parameters.
 
@@ -354,9 +363,9 @@ class BaseScore(BaseOptimizer):
             A triple containing the BUFF score, RMSD to the top model
             and generation of a model generated during the minimisation.
         """
-        param_score_gen, top_result_model = psg_trm
+        param_score_gen, top_result_model, specification = psg_trm_spec
         params, score, gen = param_score_gen
-        model = self._params['specification'](*params)
+        model = specification(*params)
         rmsd = top_result_model.rmsd(model)
         return rmsd, score, gen
 
