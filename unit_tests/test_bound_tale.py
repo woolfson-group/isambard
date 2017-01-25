@@ -1,5 +1,8 @@
 import unittest
 
+from hypothesis import given, settings
+from hypothesis.strategies import integers, floats, booleans
+
 import isambard_dev as isambard
 
 
@@ -17,3 +20,12 @@ class TestBoundTaleModelling(unittest.TestCase):
         self.assertAlmostEqual(thp.splays[1], parameters['splay'], places=3)
         self.assertEqual(thp.off_plane[0], 0)
         self.assertAlmostEqual(thp.off_plane[1], parameters['off_plane'], places=3)
+
+    @given(integers(max_value=100), floats(), booleans())
+    @settings(max_examples=20)
+    def test_tale_model(self, repeats, shift, up):
+        tale = isambard.specifications.assembly_specs.Tale(repeats, shift, up=up)
+        if repeats > 0:
+            self.assertEqual(len(tale), repeats*2)
+        else:
+            self.assertEqual(len(tale), 0)
