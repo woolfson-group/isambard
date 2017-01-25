@@ -1,5 +1,5 @@
-from ampal.specifications.assembly_specs.solenoid import HelixPair, Solenoid
-from ampal.specifications.assembly_specs.coiledcoil import CoiledCoil
-from ampal.specifications.assembly_specs.nucleic_acid_duplex import DNADuplex
-from ampal.specifications.assembly_specs.membrane_4hb import Membrane4HelixBundle
-from ampal.specifications.assembly_specs.bound_tale import TaleHelixPair
+from .solenoid import HelixPair, Solenoid
+from .coiledcoil import CoiledCoil
+from .nucleic_acid_duplex import DNADuplex
+from .membrane_4hb import Membrane4HelixBundle
+from .bound_tale import TaleHelixPair
