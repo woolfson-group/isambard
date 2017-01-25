@@ -117,6 +117,84 @@ def goap_build(params):
     return Path(pathf.name).name
 
 
+def buff_eval(params):
+    """Builds and evaluates BUFF energy of model in parallelization
+
+    Parameters
+    ----------
+    params: list
+        Tuple containing the specification to be built, the sequence, and the parameters for model building.
+
+    Returns
+    -------
+    model.bude_score: float
+        BUFF score for model to be assigned to particle fitness value.
+    """
+    specification, sequence, parsed_ind = params
+    model = specification(*parsed_ind)
+    model.build()
+    model.pack_new_sequences(sequence)
+    return model.buff_interaction_energy.total_energy
+
+
+def buff_internal_eval(params):
+    """Builds and evaluates BUFF internal energy of a model in parallelization
+
+    Parameters
+    ----------
+    params: list
+        Tuple containing the specification to be built, the sequence and the parameters for model building.
+
+    Returns
+    -------
+    model.bude_score: float
+        BUFF internal energy score to be assigned to particle fitness value
+    """
+
+    specification, sequence, parsed_ind = params
+    model = specification(*parsed_ind)
+    model.build()
+    model.pack_new_sequences(sequence)
+    return model.buff_internal_energy.total_energy
+
+
+def rmsd_eval(rmsd_params):
+    """
+    Builds a model based on an individual from the optimizer and runs profit against a reference model.
+
+    Parameters
+    ----------
+    rmsd_params
+
+    Returns
+    -------
+    rmsd: float
+        rmsd against reference model as calculated by profit.
+    """
+    specification, sequence, parsed_ind, reference_pdb = rmsd_params
+    model = specification(*parsed_ind)
+    model.pack_new_sequences(sequence)
+    ca, bb, aa = run_profit(model.pdb, reference_pdb, path1=False, path2=False)
+    return bb
+
+
+def comparator_eval(comparator_params):
+    """Gets BUFF score for interaction between two AMPAL objects
+    """
+    top1, top2, params1, params2, seq1, seq2, movements = comparator_params
+    xrot, yrot, zrot, xtrans, ytrans, ztrans = movements
+    obj1 = top1(*params1)
+    obj2 = top2(*params2)
+    obj2.rotate(xrot, [1, 0, 0])
+    obj2.rotate(yrot, [0, 1, 0])
+    obj2.rotate(zrot, [0, 0, 1])
+    obj2.translate([xtrans, ytrans, ztrans])
+    model = obj1 + obj2
+    model.relabel_all()
+    model.pack_new_sequences(seq1 + seq2)
+    return model.buff_interaction_energy.total_energy
+
+
 class BaseOptimizer:
 
     def __init__(self, **kwargs):
@@ -387,7 +465,7 @@ class BaseGoapScore(BaseOptimizer):
     def assign_fitnesses(self, targets):
 
         self._params['evals'] = len(targets)
-        px_parameters=zip([self._params['specification']] * len(targets),
+        px_parameters = zip([self._params['topology']] * len(targets),
                             [self._params['sequence']] * len(targets),
                             [self.parse_individual(x) for x in targets])
         if (self._params['processors'] == 1) or (sys.platform == 'win32'):
