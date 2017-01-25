@@ -1,4 +1,6 @@
+from ampal import Assembly
 from .solenoid import HelixPair, Solenoid
+from .nucleic_acid_duplex import DNADuplex
 from ..polymer_specs.nucleic_acid_strand import _helix_parameters
 
 
@@ -55,21 +57,60 @@ class Tale(Solenoid):
         ru.rotate(125.974, (1, 0, 0))
         ru.rotate(-65.135, (0, 1, 0))
         ru.rotate(156.975, (0, 0, 1))
-        # Solenoid para
+        # Solenoid initialisation
         rad = _tale_parameters['radius']
         rise = _tale_parameters['rise']
         rot_ang = _tale_parameters['angular_offset']
+        super().__init__(ru, repeats, rad, rise, rot_ang, 'right')
         # Rotate TALE into phase with DNA
         self.dna_shift = dna_shift
         if up:
-            super().__init__(ru, repeats, rad, rise, rot_ang, 'right')
             self.rotate(-138 + z_rot_adjust(self.dna_shift), (0, 0, 1))
-            self.translate((0, 0, self.dna_shift))
         else:
-            super().__init__(ru, repeats, rad, -rise, -rot_ang, 'right')
             self.rotate(55 - z_rot_adjust(self.dna_shift), (0, 0, 1))
             self.rotate(180, (1, 0, 0))
-            self.translate((0, 0, self.dna_shift))
+        self.translate((0, 0, self.dna_shift))
+
+
+class TaleDNA(Assembly):
+    def __init__(self, up_repeats, down_repeats, up_shift, down_shift, dna_sequence):
+        """
+
+        Parameters
+        ----------
+        up_repeats
+        down_repeats
+        up_shift
+        down_shift
+        dna_sequence
+        """
+        super().__init__()
+        up_tale = Tale(up_repeats, up_shift, up=True)
+        down_tale = Tale(down_repeats, down_shift, up=False)
+        dna = DNADuplex.from_sequence(dna_sequence)
+        # Relabel for convenience
+        self._default_tale_labelling(up_tale, 'A')
+        self._default_tale_labelling(down_tale, 'B')
+        dna.relabel_polymers(['C', 'D'])
+        self.extend(up_tale)
+        self.extend(down_tale)
+        self.extend(dna)
+
+    @staticmethod
+    def _default_tale_labelling(assembly, chain_label):
+        """
+
+        Parameters
+        ----------
+        assembly
+        chain_label
+        """
+        for mol in assembly:
+            mol.id = chain_label
+        monomers = list(assembly.get_monomers())
+        for res, label in zip(monomers, range(1, len(monomers) + 1)):
+            res.id = str(label)
+        return
 
 
 __author__ = 'Christopher W. Wood'
