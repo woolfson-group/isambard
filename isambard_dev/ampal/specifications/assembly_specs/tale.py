@@ -1,5 +1,7 @@
 """Specifications for generating models of TALE proteins."""
 
+from functools import reduce
+
 from ampal import Assembly
 from .solenoid import HelixPair, Solenoid
 from .nucleic_acid_duplex import DNADuplex
@@ -55,6 +57,10 @@ class Tale(Solenoid):
         repeats: int
             Number of repeating units to model.
         """
+        try:
+            assert repeats > 0
+        except AssertionError:
+            raise ValueError('The TALE model must have at least one repeat.')
         ru = TaleHelixPair()
         # These operations rotate the repeating unit into the correct orientation
         ru.rotate(125.974, (1, 0, 0))
@@ -114,8 +120,9 @@ class TaleDNA(Assembly):
         self._default_tale_labelling(up_tale, 'A')
         self._default_tale_labelling(down_tale, 'B')
         dna.relabel_polymers(['C', 'D'])
-        self.extend(up_tale)
-        self.extend(down_tale)
+        # We use reduce to merge all the polypeptides into a single polypeptide
+        self.append(reduce(lambda pp, frag: pp + frag, up_tale[1:], up_tale[0]))
+        self.append(reduce(lambda pp, frag: pp + frag, down_tale[1:], down_tale[0]))
         self.extend(dna)
 
     @staticmethod
