@@ -1,3 +1,5 @@
+"""Specifications for generating models of TALE proteins."""
+
 from ampal import Assembly
 from .solenoid import HelixPair, Solenoid
 from .nucleic_acid_duplex import DNADuplex
@@ -43,14 +45,15 @@ class TaleHelixPair(HelixPair):
 
 
 class Tale(Solenoid):
-    def __init__(self, repeats, dna_shift, up=True):
-        """
+    def __init__(self, repeats):
+        """Builds a model of a TALE protein.
+
+        Super-helical parameters are based on 3v6t.
 
         Parameters
         ----------
-        repeats
-        dna_shift
-        up
+        repeats: int
+            Number of repeating units to model.
         """
         ru = TaleHelixPair()
         # These operations rotate the repeating unit into the correct orientation
@@ -62,32 +65,51 @@ class Tale(Solenoid):
         rise = _tale_parameters['rise']
         rot_ang = _tale_parameters['angular_offset']
         super().__init__(ru, repeats, rad, rise, rot_ang, 'right')
-        # Rotate TALE into phase with DNA
-        self.dna_shift = dna_shift
-        if up:
-            self.rotate(-138 + z_rot_adjust(self.dna_shift), (0, 0, 1))
-        else:
-            self.rotate(55 - z_rot_adjust(self.dna_shift), (0, 0, 1))
-            self.rotate(180, (1, 0, 0))
-        self.translate((0, 0, self.dna_shift))
 
 
 class TaleDNA(Assembly):
-    def __init__(self, up_repeats, down_repeats, up_shift, down_shift, dna_sequence):
-        """
+    def __init__(self, up_repeats, down_repeats, up_shift, down_shift, dna_sequence, build=True):
+        """Build a model of DNA with two bound TALE proteins.
 
         Parameters
         ----------
-        up_repeats
-        down_repeats
-        up_shift
-        down_shift
-        dna_sequence
+        up_repeats: int
+            Number of repeats in the up TALE.
+        down_repeats: int
+            Number of repeats in the down TALE.
+        up_shift: float
+            Distance, in angstoms, that the up TALE is shifted along the DNA.
+        down_shift: float
+            Distance, in angstoms, that the down TALE is shifted along the DNA.
+        dna_sequence: str
+            DNA sequence of the forward strand of the DNA duplex. The reverse
+            compliment will be generated automatically.
         """
         super().__init__()
-        up_tale = Tale(up_repeats, up_shift, up=True)
-        down_tale = Tale(down_repeats, down_shift, up=False)
-        dna = DNADuplex.from_sequence(dna_sequence)
+        self.up_repeats = up_repeats
+        self.up_shift = up_shift
+        self.down_repeats = down_repeats
+        self.down_shift = down_shift
+        self.dna_sequence = dna_sequence
+        if build:
+            self.build()
+
+    def build(self):
+        """Builds a model using the parameters provided during initialisation."""
+        self._molecules = []
+        # Up TALE
+        up_tale = Tale(self.up_repeats)
+        up_tale.rotate(-138 + z_rot_adjust(self.up_shift), (0, 0, 1))
+        up_tale.rotate(55 - z_rot_adjust(self.up_shift), (0, 0, 1))
+        up_tale.translate((0, 0, self.up_shift))
+        # Down TALE
+        down_tale = Tale(self.down_repeats)
+        down_tale.rotate(55 - z_rot_adjust(self.down_shift), (0, 0, 1))
+        down_tale.rotate(180, (1, 0, 0))
+        down_tale.rotate(180, (1, 0, 0))
+        down_tale.translate((0, 0, self.down_shift))
+        # DNA
+        dna = DNADuplex.from_sequence(self.dna_sequence)
         # Relabel for convenience
         self._default_tale_labelling(up_tale, 'A')
         self._default_tale_labelling(down_tale, 'B')
@@ -98,13 +120,7 @@ class TaleDNA(Assembly):
 
     @staticmethod
     def _default_tale_labelling(assembly, chain_label):
-        """
-
-        Parameters
-        ----------
-        assembly
-        chain_label
-        """
+        """Labels a tale as a single chain."""
         for mol in assembly:
             mol.id = chain_label
         monomers = list(assembly.get_monomers())

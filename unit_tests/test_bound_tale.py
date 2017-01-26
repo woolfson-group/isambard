@@ -8,8 +8,8 @@ import isambard_dev as isambard
 
 class TestBoundTaleModelling(unittest.TestCase):
     def test_tale_helix_pair(self):
-        thp = isambard.specifications.assembly_specs.bound_tale.TaleHelixPair()
-        parameters = isambard.specifications.assembly_specs.bound_tale._repeating_unit_parameters
+        thp = isambard.specifications.assembly_specs.tale.TaleHelixPair()
+        parameters = isambard.specifications.assembly_specs.tale._repeating_unit_parameters
         self.assertAlmostEqual(thp.axis_distances[0], -parameters['axis_dist'], places=3)
         self.assertAlmostEqual(thp.axis_distances[1], parameters['axis_dist'], places=3)
         self.assertEqual(thp.z_shifts[0], 0)
@@ -21,10 +21,10 @@ class TestBoundTaleModelling(unittest.TestCase):
         self.assertEqual(thp.off_plane[0], 0)
         self.assertAlmostEqual(thp.off_plane[1], parameters['off_plane'], places=3)
 
-    @given(integers(max_value=100), floats(), booleans())
+    @given(integers(max_value=100))
     @settings(max_examples=20)
-    def test_tale_model(self, repeats, shift, up):
-        tale = isambard.specifications.assembly_specs.Tale(repeats, shift, up=up)
+    def test_tale_model(self, repeats):
+        tale = isambard.specifications.assembly_specs.tale.Tale(repeats)
         if repeats > 0:
             self.assertEqual(len(tale), repeats*2)
         else:
