@@ -4,6 +4,7 @@ from .assembly_specs.coiledcoil import CoiledCoil
 from .assembly_specs.deltaprot import DeltaProt
 from .assembly_specs.nucleic_acid_duplex import DNADuplex
 from .assembly_specs.membrane_4hb import Membrane4HelixBundle
+from .assembly_specs.tale import Tale, TaleDNA
 
 # Polymer Specs
 from .polymer_specs.ta_polypeptide import TAPolypeptide
