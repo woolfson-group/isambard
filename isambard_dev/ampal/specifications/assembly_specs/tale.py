@@ -106,12 +106,10 @@ class TaleDNA(Assembly):
         # Up TALE
         up_tale = Tale(self.up_repeats)
         up_tale.rotate(-138 + z_rot_adjust(self.up_shift), (0, 0, 1))
-        up_tale.rotate(55 - z_rot_adjust(self.up_shift), (0, 0, 1))
         up_tale.translate((0, 0, self.up_shift))
         # Down TALE
         down_tale = Tale(self.down_repeats)
         down_tale.rotate(55 - z_rot_adjust(self.down_shift), (0, 0, 1))
-        down_tale.rotate(180, (1, 0, 0))
         down_tale.rotate(180, (1, 0, 0))
         down_tale.translate((0, 0, self.down_shift))
         # DNA
