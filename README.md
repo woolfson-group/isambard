@@ -1,6 +1,6 @@
 #ISAMBARD
 ###Intelligent System for Analysis, Model Building And Rational Design of proteins.
-#### Version 1.2.1 (Jan 25, 2017), Woolfson Group, University of Bristol.
+#### Version 1.3.0 (Jan 27, 2017), Woolfson Group, University of Bristol.
 [![CircleCI](https://circleci.com/gh/woolfson-group/isambard_dev.svg?style=shield&circle-token=0af7a4c0efd449fda7db2d1deef2745b8d289dcf)](https://circleci.com/gh/woolfson-group/isambard_dev)
 [![codecov](https://codecov.io/gh/woolfson-group/isambard_dev/branch/master/graph/badge.svg?token=UEzouOJSdl)](https://codecov.io/gh/woolfson-group/isambard_dev)
 [![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg?maxAge=2592000)](https://gitter.im/woolfson-group/isambard?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
@@ -9,11 +9,15 @@
 
 ## Recent Changes
 
-#### v1.2
-#### v1.2.1
-* Reworked imports to make them more consistent
+#### v1.3
+##### v1.3.0
+* New TALE modelling specifications
+    * Can model as stand alone proteins or as pairs of TALEs bound to DNA
+* Updated `__repr__` of `Assembly`
 
-##### v1.2.0
+#### v1.2
+#### v1.2.0 - 1.2.1
+* Reworked imports to make them more consistent
 * Added DFire2 potential
 
 #### v1.1
