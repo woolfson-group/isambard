@@ -2,7 +2,7 @@
 
 from collections import OrderedDict
 import itertools
-import os
+import os, sys
 import pathlib
 
 from sqlalchemy import create_engine, Column, Integer, String
@@ -64,6 +64,12 @@ def convert_pdb_to_ampal(pdb, path=True, pdb_id='', ignore_end=False):
         then an `Assembly` will be returned, otherwise an
         `AmpalContainer` will be returned.
     """
+    if not os.path.isfile(pdb):
+        # To select one of the options. Either raising error or aborting execution.
+        sys.stderr.write("File [%s] must exist and be readable.\n" % (pdb))
+        sys.exit(2)
+        raise ValueError("File [%s], must exist and be readable." % (pdb))
+    
     pdb_p = PdbParser(pdb, path=path, pdb_id=pdb_id, ignore_end=ignore_end)
     return pdb_p.make_ampal()
 
@@ -141,6 +147,11 @@ class PdbParser(object):
                                }
         try:
             for line in self.pdb_lines:
+                if len(line) < 80:
+                    # To select one of the options. Either raising error or aborting execution.
+                    sys.stderr.write("Malformed PDB [%s.pdb], lines must be 80 characters long.\n" % (self.id))
+                    sys.exit(2)
+                    raise ValueError("Malformed PDB [%s.pdb], lines must be 80 characters long." % (self.id))
                 self.current_line = line
                 record_name = line[:6].strip()
                 if record_name in self.proc_functions:
@@ -200,19 +211,41 @@ class PdbParser(object):
     def proc_line_coordinate(self, line):
         """Extracts data from columns in ATOM/HETATM record."""
         pdb_atom_col_dict = global_settings['ampal']['pdb_atom_col_dict']
+        
         at_type = line[0:6].strip()  # 0
-        at_ser = int(line[6:11].strip())  # 1
+        
+        try:
+            at_ser = int(line[6:11].strip())  # 1
+        except:
+            raise ValueError('Malformed PDB, wrong format for atom number. Please check [%s].' % (line[6:11]))
+        
         at_name = line[12:16].strip()  # 2
         alt_loc = line[16].strip()  # 3
         res_name = line[17:20].strip()  # 4
         chain_id = line[21].strip()  # 5
-        res_seq = int(line[22:26].strip())  # 6
+        
+        try:
+            res_seq = int(line[22:26].strip())  # 6
+        except:
+            raise ValueError('Malformed PDB, wrong format for residue number. Please check [%s].' % (line[22:26]))
+        
         i_code = line[26].strip()  # 7
-        x = float(line[30:38].strip())  # 8
-        y = float(line[38:46].strip())  # 9
-        z = float(line[46:54].strip())  # 10
-        occupancy = float(line[54:60].strip())  # 11
-        temp_factor = float(line[60:66].strip())  # 12
+        try:
+            x = float(line[30:38].strip())  # 8
+            y = float(line[38:46].strip())  # 9
+            z = float(line[46:54].strip())  # 10
+        except:
+            raise ValueError('Malformed PDB, wrong format for X, Y, Z coordinates. Please check [%s].' % (line[30:54]))
+        try:
+            occupancy = float(line[54:60].strip())  # 11
+        except:
+            occupancy = 1.0
+        
+        try:
+            temp_factor = float(line[60:66].strip())  # 12
+        except:
+            temp_factor = 0.0
+        
         element = line[76:78].strip()  # 13
         charge = line[78:80].strip()  # 14
         if at_name not in pdb_atom_col_dict:

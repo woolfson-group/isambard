@@ -103,3 +103,5 @@ DrewTools
 *.csv
 isambard/settings.json
 hot.grp
+/.project
+/.pydevproject
